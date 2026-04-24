@@ -10,23 +10,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0f1923;
-  --bg2: #162030;
-  --bg3: #1e2d3d;
-  --card: #1a2738;
-  --card2: #213045;
-  --border: rgba(255,255,255,0.07);
-  --accent: #00d4aa;
-  --accent2: #0099ff;
-  --red: #ff4757;
-  --orange: #ff9f43;
-  --yellow: #ffd32a;
-  --text: #e8f0fe;
-  --text2: #8fa3b8;
-  --text3: #5a7a94;
+  --bg: #f0f4f0;
+  --bg2: #e8f0e8;
+  --bg3: #ddeadd;
+  --card: #ffffff;
+  --card2: #f5faf5;
+  --border: rgba(0,0,0,0.08);
+  --accent: #1a9e6e;
+  --accent2: #2563eb;
+  --red: #e03d3d;
+  --orange: #e07c1a;
+  --yellow: #c49a00;
+  --text: #1a2e1a;
+  --text2: #4a6b4a;
+  --text3: #7a9a7a;
   --radius: 16px;
   --radius-sm: 10px;
-  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
@@ -41,12 +41,12 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 /* ── NAV ── */
 nav {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 20px; background: var(--bg);
+  padding: 14px 20px; background: var(--card);
   border-bottom: 1px solid var(--border);
   position: sticky; top: 0; z-index: 100;
-  backdrop-filter: blur(20px);
+  box-shadow: 0 1px 12px rgba(0,0,0,0.06);
 }
-.nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+.nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; color: var(--text); }
 .nav-logo span { color: var(--accent); }
 .nav-tabs { display: flex; gap: 4px; background: var(--bg3); border-radius: 12px; padding: 4px; }
 .nav-tab {
@@ -54,13 +54,13 @@ nav {
   color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
   cursor: pointer; transition: all .2s; white-space: nowrap;
 }
-.nav-tab.active { background: var(--accent); color: #0f1923; font-weight: 600; }
+.nav-tab.active { background: var(--accent); color: #ffffff; font-weight: 600; }
 .add-btn {
   width: 38px; height: 38px; border-radius: 12px; border: none;
-  background: var(--accent); color: #0f1923; font-size: 22px; font-weight: 300;
+  background: var(--accent); color: #ffffff; font-size: 22px; font-weight: 300;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: transform .15s, box-shadow .15s; flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(0,212,170,0.35);
+  box-shadow: 0 4px 16px rgba(26,158,110,0.3);
 }
 .add-btn:active { transform: scale(0.93); }
 
@@ -79,14 +79,16 @@ nav {
   width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--border);
   background: var(--card); color: var(--text2); cursor: pointer; font-size: 16px;
   display: flex; align-items: center; justify-content: center; transition: all .2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .month-nav button:hover { border-color: var(--accent); color: var(--accent); }
 .month-label { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; }
 
 /* Balance ring */
 .balance-card {
-  background: linear-gradient(135deg, var(--card) 0%, var(--bg3) 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #e8f5ee 100%);
   border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow);
   padding: 24px; margin-bottom: 16px;
   display: flex; align-items: center; gap: 20px;
   position: relative; overflow: hidden;
@@ -94,7 +96,7 @@ nav {
 .balance-card::before {
   content: ''; position: absolute; top: -40px; right: -40px;
   width: 140px; height: 140px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(0,212,170,0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(26,158,110,0.12) 0%, transparent 70%);
 }
 .ring-wrap { flex-shrink: 0; }
 svg.ring { transform: rotate(-90deg); }
@@ -113,7 +115,7 @@ svg.ring { transform: rotate(-90deg); }
 .kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
 .kpi-card {
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm);
-  padding: 14px 16px;
+  padding: 14px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 .kpi-icon { font-size: 20px; margin-bottom: 6px; }
 .kpi-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 2px; }
@@ -122,7 +124,7 @@ svg.ring { transform: rotate(-90deg); }
 /* Accounts bar */
 .accounts-bar {
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm);
-  padding: 16px; margin-bottom: 16px;
+  padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 .accounts-bar h3 { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 12px; }
 .account-items { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -145,7 +147,7 @@ svg.ring { transform: rotate(-90deg); }
 .cat-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .cat-row {
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm);
-  padding: 12px 14px;
+  padding: 12px 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 .cat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .cat-name { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; }
@@ -153,13 +155,13 @@ svg.ring { transform: rotate(-90deg); }
 .cat-amounts { text-align: right; }
 .cat-real { font-size: 14px; font-weight: 600; }
 .cat-bud { font-size: 11px; color: var(--text3); }
-.progress-bar { height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+.progress-bar { height: 4px; background: rgba(0,0,0,0.08); border-radius: 4px; overflow: hidden; }
 .progress-fill { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.4,0,.2,1); }
 
 /* Monthly sparkline */
 .spark-card {
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm);
-  padding: 16px; margin-bottom: 16px;
+  padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 .spark-bars { display: flex; align-items: flex-end; gap: 4px; height: 60px; margin-top: 10px; }
 .spark-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
@@ -174,15 +176,16 @@ svg.ring { transform: rotate(-90deg); }
   padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border);
   background: var(--card); color: var(--text2); font-size: 12px; font-weight: 500;
   cursor: pointer; white-space: nowrap; transition: all .2s; flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
-.filter-chip.active { background: var(--accent); border-color: var(--accent); color: #0f1923; }
+.filter-chip.active { background: var(--accent); border-color: var(--accent); color: #ffffff; }
 .mov-list { display: flex; flex-direction: column; gap: 8px; }
 .mov-item {
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm);
   padding: 12px 14px; display: flex; align-items: center; gap: 12px;
   cursor: pointer; transition: border-color .2s; animation: fadeUp .2s ease;
 }
-.mov-item:active { border-color: var(--accent2); }
+.mov-item:active { border-color: var(--accent); }
 .mov-icon {
   width: 40px; height: 40px; border-radius: 12px; background: var(--bg3);
   display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
@@ -202,11 +205,11 @@ svg.ring { transform: rotate(-90deg); }
 
 /* ── IMPORTAR ── */
 .import-zone {
-  border: 2px dashed var(--border); border-radius: var(--radius); padding: 40px 24px;
+  border: 2px dashed #b0ccb0; border-radius: var(--radius); padding: 40px 24px;
   text-align: center; margin-bottom: 20px; cursor: pointer; transition: all .2s;
   background: var(--card);
 }
-.import-zone:hover, .import-zone.drag { border-color: var(--accent); background: rgba(0,212,170,0.05); }
+.import-zone:hover, .import-zone.drag { border-color: var(--accent); background: rgba(26,158,110,0.05); }
 .import-zone-icon { font-size: 40px; margin-bottom: 12px; }
 .import-zone h3 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 17px; margin-bottom: 6px; }
 .import-zone p { font-size: 13px; color: var(--text2); line-height: 1.5; }
@@ -216,7 +219,7 @@ svg.ring { transform: rotate(-90deg); }
   padding: 14px; text-align: center; cursor: pointer; transition: all .2s;
 }
 .bank-card:hover { border-color: var(--accent2); }
-.bank-card.selected { border-color: var(--accent); background: rgba(0,212,170,0.08); }
+.bank-card.selected { border-color: var(--accent); background: rgba(26,158,110,0.08); }
 .bank-card .bank-name { font-size: 13px; font-weight: 600; margin-top: 4px; }
 .bank-card .bank-fmt { font-size: 11px; color: var(--text3); margin-top: 2px; }
 .import-preview {
@@ -238,14 +241,14 @@ svg.ring { transform: rotate(-90deg); }
 
 /* ── MODAL ── */
 .overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200;
+  position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200;
   display: none; align-items: flex-end; justify-content: center;
   backdrop-filter: blur(4px);
 }
 .overlay.open { display: flex; animation: overlayIn .2s ease; }
 @keyframes overlayIn { from { opacity:0 } to { opacity:1 } }
 .modal {
-  background: var(--bg2); border-radius: 24px 24px 0 0; padding: 0;
+  background: var(--card); border-radius: 24px 24px 0 0; padding: 0;
   width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
   animation: slideUp .3s cubic-bezier(.4,0,.2,1);
   border-top: 1px solid var(--border);
@@ -271,8 +274,8 @@ svg.ring { transform: rotate(-90deg); }
   background: var(--bg3); color: var(--text2); font-size: 14px; font-weight: 500;
   cursor: pointer; transition: all .2s; text-align: center;
 }
-.tipo-btn.active.gasto { background: rgba(255,71,87,0.15); border-color: var(--red); color: var(--red); }
-.tipo-btn.active.ingreso { background: rgba(0,212,170,0.12); border-color: var(--accent); color: var(--accent); }
+.tipo-btn.active.gasto { background: rgba(224,61,61,0.1); border-color: var(--red); color: var(--red); }
+.tipo-btn.active.ingreso { background: rgba(26,158,110,0.1); border-color: var(--accent); color: var(--accent); }
 .cat-grid-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .cat-pick-btn {
   padding: 10px 6px; border-radius: var(--radius-sm); border: 1px solid var(--border);
@@ -280,7 +283,7 @@ svg.ring { transform: rotate(-90deg); }
   cursor: pointer; transition: all .2s; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
 .cat-pick-btn .pick-emoji { font-size: 20px; }
-.cat-pick-btn.active { border-color: var(--accent); background: rgba(0,212,170,0.1); color: var(--accent); }
+.cat-pick-btn.active { border-color: var(--accent); background: rgba(26,158,110,0.1); color: var(--accent); }
 .cuenta-toggle { display: flex; gap: 8px; }
 .cuenta-btn {
   flex: 1; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border);
@@ -290,10 +293,10 @@ svg.ring { transform: rotate(-90deg); }
 .cuenta-btn.active { border-color: var(--accent2); background: rgba(0,153,255,0.12); color: var(--accent2); }
 .submit-btn {
   width: 100%; padding: 16px; border-radius: var(--radius); border: none;
-  background: var(--accent); color: #0f1923; font-family: 'Syne', sans-serif;
+  background: var(--accent); color: #ffffff; font-family: 'Syne', sans-serif;
   font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 8px;
   transition: transform .15s, box-shadow .15s;
-  box-shadow: 0 8px 24px rgba(0,212,170,0.3);
+  box-shadow: 0 8px 24px rgba(26,158,110,0.25);
 }
 .submit-btn:active { transform: scale(0.98); }
 
@@ -303,7 +306,7 @@ svg.ring { transform: rotate(-90deg); }
   padding: 20px; margin-bottom: 16px;
 }
 .efectivo-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.efectivo-balance { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--yellow); }
+.efectivo-balance { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--accent); }
 .adjust-row { display: flex; gap: 10px; }
 .adjust-input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 15px; padding: 12px 14px; outline: none; }
 .adjust-input:focus { border-color: var(--yellow); }
@@ -312,7 +315,7 @@ svg.ring { transform: rotate(-90deg); }
 /* ── TOAST ── */
 .toast {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px);
-  background: var(--accent); color: #0f1923; padding: 10px 20px; border-radius: 12px;
+  background: var(--accent); color: #ffffff; padding: 10px 20px; border-radius: 12px;
   font-size: 14px; font-weight: 600; z-index: 999; opacity: 0;
   transition: all .3s; pointer-events: none; white-space: nowrap;
 }
@@ -339,7 +342,7 @@ svg.ring { transform: rotate(-90deg); }
   padding:4px 8px; border-radius:8px; border:1px dashed transparent; transition:border-color .2s; }
 .bud-static:hover { border-color:var(--border); }
 .bud-pct { font-size:11px; margin-top:2px; }
-.bud-summary-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; text-align:center; }
+.bud-summary-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
 .bud-summary-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:.7px; margin-bottom:4px; }
 .bud-summary-val { font-family:"Syne",sans-serif; font-weight:800; font-size:16px; }
 
@@ -749,17 +752,17 @@ const CAT_EMOJI = {Comida:'🛒',Transporte:'🚌',Niños:'👶',Gasolina:'⛽',
 const CAT_COLORS = {Comida:'#00d4aa',Transporte:'#0099ff',Niños:'#ff9f43',Gasolina:'#ff6b6b','Gastos casa':'#a29bfe',Luz:'#ffd32a',Agua:'#74b9ff','Vida social':'#fd79a8',"Hipoteca+Coche":'#e84393',Colegio:'#6c5ce7',Seguros:'#00cec9',Comunidad:'#fdcb6e',Fijos:'#636e72',Maritza:'#fd79a8',Otros:'#b2bec3'};
 // Income lines for budget (editable per month)
 const DEFAULT_INCOME_LINES = [
-  {id:'nomina',    label:'Nómina familia',   emoji:'💼', importe:5940},
-  {id:'variable',  label:'Variable Lucía',   emoji:'⭐', importe:3000},
+  {id:'nomina',    label:'Nómina familia',   emoji:'💼', importe:5340},
+  {id:'variable',  label:'Variable Lucía',   emoji:'⭐', importe:0},
   {id:'atocha',    label:'Atocha',           emoji:'🏠', importe:245},
   {id:'cristina',  label:'Pisos Cristina',   emoji:'🏡', importe:620},
-  {id:'ninos',     label:'Ayuda niños',      emoji:'🎁', importe:225},
+  {id:'ninos',     label:'Ayuda niños',      emoji:'🎁', importe:125},
 ];
 
 // Fijos sub-lines for budget (editable per month)
 const DEFAULT_FIJOS_LINES = [
   {id:'hipoteca',  label:'Hipoteca+Coche',   emoji:'🏦', importe:1882},
-  {id:'colegio',   label:'Colegio',          emoji:'🎓', importe:2800},
+  {id:'colegio',   label:'Colegio',          emoji:'🎓', importe:2562.50},
   {id:'maritza',   label:'Maritza',          emoji:'👩', importe:1445},
   {id:'seguros',   label:'Seguros',          emoji:'🛡️', importe:430},
   {id:'comunidad', label:'Comunidad',        emoji:'🏘️', importe:185},
@@ -772,7 +775,7 @@ const DEFAULT_FIJOS_LINES = [
 // budgets[mes].fijos  = {hipoteca:1882, ...}
 // budgets[mes].cats   = {Comida:450, ...}
 
-const DEFAULT_BUDGET = {Comida:450,Transporte:15,Niños:150,Gasolina:230,'Gastos casa':50,Luz:25,Agua:60,'Vida social':130,"Hipoteca+Coche":1882,Colegio:2800,Seguros:430,Fijos:100,Maritza:1445,Otros:100};
+const DEFAULT_BUDGET = {Comida:450,Transporte:15,Niños:150,Gasolina:230,'Gastos casa':50,Luz:25,Agua:60,'Vida social':130,"Hipoteca+Coche":1882,Colegio:2562.50,Seguros:430,Fijos:100,Maritza:1445,Otros:0};
 // budgets stored per month: { 'Abril': { Comida: 450, ... }, ... }
 let budgets = {};
 let customCats = []; // [{id, label, emoji, importe}]
@@ -973,7 +976,7 @@ function renderDashboard() {
     const wrap = document.createElement('div');
     wrap.className = 'spark-bar-wrap';
     wrap.innerHTML = `
-      <div class="spark-bar" style="height:${Math.max(pct,2)}%;background:${active?'var(--accent)':'rgba(255,255,255,0.12)'};${active?'box-shadow:0 0 10px rgba(0,212,170,0.5)':''}" onclick="currentMonth='${m}';renderDashboard()" title="${m}: ${fmt(total)}"></div>
+      <div class="spark-bar" style="height:${Math.max(pct,2)}%;background:${active?'var(--accent)':'rgba(0,0,0,0.1)'};${active?'box-shadow:0 0 10px rgba(0,212,170,0.5)':''}" onclick="currentMonth='${m}';renderDashboard()" title="${m}: ${fmt(total)}"></div>
       <div class="spark-label" style="color:${active?'var(--accent)':'var(--text3)'}">${MONTH_DATES[m]?.split(' ')[0]||m.slice(0,3)}</div>`;
     spark.appendChild(wrap);
   });
@@ -1629,15 +1632,15 @@ function renderPresupuesto() {
   document.getElementById('bud-summary').innerHTML = `
     <div class="bud-summary-card">
       <div class="bud-summary-label">Ingresos est.</div>
-      <div class="bud-summary-val" style="color:var(--accent)">${fmtShort(totalIng)}</div>
+      <div class="bud-summary-val" style="color:var(--accent)">${fmt(totalIng)}</div>
     </div>
     <div class="bud-summary-card">
       <div class="bud-summary-label">Gastos est.</div>
-      <div class="bud-summary-val" style="color:var(--text2)">${fmtShort(totalGastos)}</div>
+      <div class="bud-summary-val" style="color:var(--text2)">${fmt(totalGastos)}</div>
     </div>
     <div class="bud-summary-card">
       <div class="bud-summary-label">Margen</div>
-      <div class="bud-summary-val" style="color:${margen>=0?'var(--accent)':'var(--red)'}">${margen>=0?'+':''}${fmtShort(margen)}</div>
+      <div class="bud-summary-val" style="color:${margen>=0?'var(--accent)':'var(--red)'}">${margen>=0?'+':''}${fmt(margen)}</div>
     </div>`;
 
   const list = document.getElementById('bud-cat-list');
@@ -1654,35 +1657,45 @@ function renderPresupuesto() {
     const row = document.createElement('div');
     row.className = 'bud-row ok';
     row.style.cssText = 'display:flex;align-items:center;gap:12px';
-    row.innerHTML = `
-      <span style="font-size:18px;width:24px;text-align:center;flex-shrink:0">${emoji}</span>
-      <span style="flex:1;font-size:14px;font-weight:500">${label}</span>
-      <input type="number" value="${value||''}" placeholder="0" step="1"
-        style="width:88px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;
-               color:var(--text);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
-               padding:7px 10px;text-align:right;outline:none;-webkit-appearance:none"
-        onfocus="this.style.borderColor='var(--accent)';this.select()"
-        onblur="this.style.borderColor='var(--border)'"
-        onchange="(${onSave.toString()})(parseFloat(this.value)||0)"
-        onkeydown="if(event.key==='Enter')this.blur()">
-      <span style="font-size:12px;color:var(--text3);flex-shrink:0">€/mes</span>`;
+    const inp = document.createElement('input');
+    inp.type = 'number';
+    inp.value = value || '';
+    inp.placeholder = '0';
+    inp.step = '1';
+    inp.style.cssText = 'width:88px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:"Syne",sans-serif;font-size:14px;font-weight:700;padding:7px 10px;text-align:right;outline:none;-webkit-appearance:none';
+    inp.addEventListener('focus', () => { inp.style.borderColor='var(--accent)'; inp.select(); });
+    inp.addEventListener('blur',  () => { inp.style.borderColor='var(--border)'; onSave(parseFloat(inp.value)||0); });
+    inp.addEventListener('keydown', e => { if(e.key==='Enter') inp.blur(); });
+    const emojiEl = document.createElement('span');
+    emojiEl.style.cssText = 'font-size:18px;width:24px;text-align:center;flex-shrink:0';
+    emojiEl.textContent = emoji;
+    const labelEl = document.createElement('span');
+    labelEl.style.cssText = 'flex:1;font-size:14px;font-weight:500;color:var(--text)';
+    labelEl.textContent = label;
+    const unitEl = document.createElement('span');
+    unitEl.style.cssText = 'font-size:12px;color:var(--text3);flex-shrink:0';
+    unitEl.textContent = '€/mes';
+    row.appendChild(emojiEl);
+    row.appendChild(labelEl);
+    row.appendChild(inp);
+    row.appendChild(unitEl);
     list.appendChild(row);
   }
 
   addHeader('💰', 'Ingresos esperados');
   incomeLines.forEach(line => {
-    editRow(line.emoji, line.label, line.importe, val => { saveIncomeLine(mes, line.id, val); renderPresupuesto(); renderDashboard(); });
+    editRow(line.emoji, line.label, line.importe, val => { saveIncomeLine(mes, line.id, val); updateBudSummary(mes); renderDashboard(); });
   });
 
   addHeader('📋', 'Gastos fijos');
   fijosLines.forEach(line => {
-    editRow(line.emoji, line.label, line.importe, val => { saveFijosLine(mes, line.id, val); renderPresupuesto(); renderDashboard(); });
+    editRow(line.emoji, line.label, line.importe, val => { saveFijosLine(mes, line.id, val); updateBudSummary(mes); renderDashboard(); });
   });
 
   addHeader('📊', 'Gastos variables');
   // Built-in cats
   CATS.filter(c => !FIJOS_CATS.includes(c) && c !== 'Fijos').forEach(cat => {
-    editRow(CAT_EMOJI[cat]||'📦', cat, catBud[cat]||0, val => { saveBudgetCat(mes, cat, val); renderPresupuesto(); renderDashboard(); });
+    editRow(CAT_EMOJI[cat]||'📦', cat, catBud[cat]||0, val => { saveBudgetCat(mes, cat, val); updateBudSummary(mes); renderDashboard(); });
   });
   // Custom cats
   customCats.forEach(cc => {
@@ -1699,7 +1712,7 @@ function renderPresupuesto() {
                padding:7px 10px;text-align:right;outline:none;-webkit-appearance:none"
         onfocus="this.style.borderColor='var(--accent)';this.select()"
         onblur="this.style.borderColor='var(--border)'"
-        onchange="saveBudgetCat('${mes}','${cc.label}',parseFloat(this.value)||0);renderDashboard()"
+        onchange="saveBudgetCat('${mes}','${cc.label}',parseFloat(this.value)||0);updateBudSummary('${mes}');renderDashboard()"
         onkeydown="if(event.key==='Enter')this.blur()">
       <span style="font-size:12px;color:var(--text3);flex-shrink:0">€/mes</span>
       <button onclick="deleteCustomCat('${cc.id}')"
@@ -1714,6 +1727,35 @@ function renderPresupuesto() {
   addCatBtn.innerHTML = '<span style="font-size:18px">+</span> Nueva categoría de gasto';
   addCatBtn.onclick = () => openNewCatModal();
   list.appendChild(addCatBtn);
+}
+
+function updateBudSummary(mes) {
+  const incomeLines = getIncomeLines(mes);
+  const fijosLines  = getFijosLines(mes);
+  const catBud      = getBudget(mes);
+  const FIJOS_CATS  = ['Hipoteca+Coche','Colegio','Seguros','Maritza'];
+  const builtinVarCats = CATS.filter(c => !FIJOS_CATS.includes(c) && c !== 'Fijos');
+  const totalIng    = incomeLines.reduce((s,l) => s+l.importe, 0);
+  const totalFijos  = fijosLines.reduce((s,l) => s+l.importe, 0);
+  const totalVarBuiltin = builtinVarCats.reduce((s,cat) => s+(catBud[cat]||0), 0);
+  const totalVarCustom  = customCats.reduce((s,cc) => s+((budgets[mes]?.cats?.[cc.label])||cc.importe||0), 0);
+  const totalGastos = totalFijos + totalVarBuiltin + totalVarCustom;
+  const margen      = totalIng - totalGastos;
+  const el = document.getElementById('bud-summary');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="bud-summary-card">
+      <div class="bud-summary-label">Ingresos est.</div>
+      <div class="bud-summary-val" style="color:var(--accent)">${fmt(totalIng)}</div>
+    </div>
+    <div class="bud-summary-card">
+      <div class="bud-summary-label">Gastos est.</div>
+      <div class="bud-summary-val" style="color:var(--text2)">${fmt(totalGastos)}</div>
+    </div>
+    <div class="bud-summary-card">
+      <div class="bud-summary-label">Margen</div>
+      <div class="bud-summary-val" style="color:${margen>=0?'var(--accent)':'var(--red)'}">${margen>=0?'+':''}${fmt(margen)}</div>
+    </div>`;
 }
 
 function prevMonthBud() {
