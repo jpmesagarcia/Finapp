@@ -534,7 +534,7 @@ svg.ring { transform: rotate(-90deg); }
         </div>
       </div>
 
-      <div class="import-zone" id="import-zone" onclick="document.getElementById('file-input').click()" ondragover="e=>{e.preventDefault();this.classList.add('drag')}" ondragleave="e=>{this.classList.remove('drag')}" ondrop="handleDrop(event)">
+      <div class="import-zone" id="import-zone" onclick="document.getElementById('file-input').click()">
         <div class="import-zone-icon">📂</div>
         <h3>Arrastra tu CSV aquí</h3>
         <p>o toca para seleccionar el archivo<br>
@@ -744,8 +744,8 @@ svg.ring { transform: rotate(-90deg); }
 // ─── DATA ───────────────────────────────────────────────────
 const SEED_DATA = [];
 
-const MONTHS = ['Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre','Enero','Febrero','Marzo','Abril'];
-const MONTH_DATES = {Junio:'Jun 25',Julio:'Jul 25',Agosto:'Ago 25',Septiembre:'Sep 25',Octubre:'Oct 25',Noviembre:'Nov 25',Diciembre:'Dic 25',Enero:'Ene 26',Febrero:'Feb 26',Marzo:'Mar 26',Abril:'Abr 26'};
+const MONTHS = ['Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre','Enero','Febrero','Marzo','Abril','Mayo','Junio 26','Julio 26'];
+const MONTH_DATES = {Junio:'Jun 25',Julio:'Jul 25',Agosto:'Ago 25',Septiembre:'Sep 25',Octubre:'Oct 25',Noviembre:'Nov 25',Diciembre:'Dic 25',Enero:'Ene 26',Febrero:'Feb 26',Marzo:'Mar 26',Abril:'Abr 26',Mayo:'May 26','Junio 26':'Jun 26','Julio 26':'Jul 26'};
 const INCOME_CATS = ['Nómina','Variable Lucía','Atocha','Pisos Cristina','Ayuda niños','Otros ingresos'];
 const CATS = ['Comida','Transporte','Niños','Gasolina','Gastos casa','Luz','Agua','Vida social','Hipoteca+Coche','Colegio','Seguros','Fijos','Maritza','Otros'];
 const CAT_EMOJI = {Comida:'🛒',Transporte:'🚌',Niños:'👶',Gasolina:'⛽','Gastos casa':'🏠',Luz:'💡',Agua:'💧','Vida social':'🎉',"Hipoteca+Coche":'🏦',Colegio:'🎓',Seguros:'🛡️',Comunidad:'🏘️',Fijos:'📋',Maritza:'👩',Otros:'📦',Ingreso:'💰'};
@@ -1494,7 +1494,7 @@ function showPage(name) {
   document.getElementById('main').scrollTop = 0;
   if (name === 'movimientos') renderMovimientos();
   if (name === 'importar') updateEfectivoDisplay();
-  if (name === 'presupuesto') { budMonth = currentMonth; renderPresupuesto(); }
+  if (name === 'presupuesto') { renderPresupuesto(); }
 }
 
 // ─── TOAST ────────────────────────────────────────────────────
@@ -1848,6 +1848,19 @@ async function syncFromSheets() {
 }
 
 // Restore saved API URL on load
+function initImportZone() {
+  const zone = document.getElementById('import-zone');
+  if (!zone) return;
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', e => { zone.classList.remove('drag'); });
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (f) parseCSV(f);
+  });
+}
+
 function initSyncUI() {
   const saved = localStorage.getItem('finanzas_api_url');
   const input = document.getElementById('api-url-input');
@@ -1918,6 +1931,7 @@ function deleteCustomCat(id) {
 loadData();
 renderDashboard();
 initSyncUI();
+initImportZone();
 </script>
 </body>
 </html>
