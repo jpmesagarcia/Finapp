@@ -47,6 +47,11 @@ nav {
   box-shadow: 0 1px 12px rgba(0,0,0,0.06);
 }
 .nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; color: var(--text); }
+@media (min-width: 900px) {
+  .nav-logo { font-size: 20px; }
+  .nav-tab { padding: 7px 18px; font-size: 14px; }
+  .add-btn { width: 42px; height: 42px; font-size: 24px; }
+}
 .nav-logo span { color: var(--accent); }
 .nav-tabs { display: flex; gap: 4px; background: var(--bg3); border-radius: 12px; padding: 4px; }
 .nav-tab {
@@ -105,6 +110,9 @@ svg.ring { transform: rotate(-90deg); }
 .balance-info { flex: 1; }
 .balance-label { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
 .balance-amount { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; line-height: 1; margin-bottom: 8px; }
+@media (min-width: 900px) {
+  .balance-amount { font-size: 26px; }
+}
 .balance-amount.pos { color: var(--accent); }
 .balance-amount.neg { color: var(--red); }
 .balance-sub { display: flex; gap: 16px; }
@@ -184,6 +192,10 @@ svg.ring { transform: rotate(-90deg); }
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm);
   padding: 12px 14px; display: flex; align-items: center; gap: 12px;
   cursor: pointer; transition: border-color .2s; animation: fadeUp .2s ease;
+}
+@media (min-width: 900px) {
+  .mov-list { display: flex; flex-direction: column; gap: 8px; max-width: 800px; }
+  .mov-item { animation: none; }
 }
 .mov-item:active { border-color: var(--accent); }
 .mov-icon {
@@ -346,10 +358,48 @@ svg.ring { transform: rotate(-90deg); }
 .bud-summary-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:.7px; margin-bottom:4px; }
 .bud-summary-val { font-family:"Syne",sans-serif; font-weight:800; font-size:16px; }
 
-/* responsive */
-@media (min-width: 600px) {
-  nav { padding: 16px 28px; }
-  .page { padding: 24px 28px; }
+/* ── DESKTOP LAYOUT ── */
+@media (min-width: 900px) {
+  #app { max-width: 1280px; margin: 0 auto; }
+  nav { padding: 14px 40px; border-radius: 0; }
+  #main { padding: 0; }
+  .page { padding: 28px 40px; }
+  .kpi-row { grid-template-columns: repeat(4, 1fr); }
+
+  /* Dashboard 2-col */
+  #dash-layout {
+    display: grid;
+    grid-template-columns: 440px 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+  #dash-left { display: flex; flex-direction: column; gap: 14px; }
+  #dash-right { display: flex; flex-direction: column; gap: 0; position: sticky; top: 60px; max-height: calc(100vh - 80px); overflow-y: auto; padding-right: 4px; }
+  #dash-right::-webkit-scrollbar { width: 3px; }
+  #dash-right::-webkit-scrollbar-thumb { background: #c0d4c0; border-radius: 4px; }
+  /* KPIs in 2x2 grid on desktop left column */
+  #dash-left .kpi-row { grid-template-columns: 1fr 1fr; }
+
+  /* Presupuesto 3-col */
+  #bud-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* Movimientos table */
+  .mov-item { padding: 10px 16px; }
+  .mov-concepto { font-size: 14px; }
+
+  /* Wider modal */
+  .modal { max-width: 520px; margin: auto; border-radius: 20px; }
+  .overlay { align-items: center; }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  nav { padding: 14px 24px; }
+  .page { padding: 20px 24px; }
   .kpi-row { grid-template-columns: repeat(4, 1fr); }
 }
 </style>
@@ -378,6 +428,9 @@ svg.ring { transform: rotate(-90deg); }
         </div>
         <div style="font-size:12px;color:var(--text3)" id="dash-count"></div>
       </div>
+
+      <div id="dash-layout">
+      <div id="dash-left">
 
       <!-- Balance ring -->
       <div class="balance-card">
@@ -455,9 +508,13 @@ svg.ring { transform: rotate(-90deg); }
         <div class="spark-bars" id="spark-bars"></div>
       </div>
 
+      </div><!-- /dash-left -->
+      <div id="dash-right">
       <!-- Categories -->
-      <div class="section-title">Seguimiento del mes</div>
+      <div class="section-title" style="margin-bottom:12px">Seguimiento del mes</div>
       <div class="cat-grid" id="cat-grid"></div>
+      </div><!-- /dash-right -->
+      </div><!-- /dash-layout -->
     </div>
 
     <!-- MOVIMIENTOS -->
@@ -489,12 +546,19 @@ svg.ring { transform: rotate(-90deg); }
       <!-- Summary cards -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px" id="bud-summary"></div>
 
-      <!-- Category rows -->
-      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px;display:flex;justify-content:space-between">
-        <span>Categoría</span>
-        <span style="font-size:11px;font-weight:400;color:var(--text3)">Real / Presupuesto</span>
+      <div id="bud-layout">
+        <div id="bud-col-left">
+          <div id="bud-cat-list-left" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+        <div id="bud-col-mid">
+          <div id="bud-cat-list-mid" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+        <div id="bud-col-right">
+          <div id="bud-cat-list-right" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
       </div>
-      <div id="bud-cat-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      <!-- bud-cat-list kept for JS compat -->
+      <div id="bud-cat-list" style="display:none"></div>
 
       <!-- Copy from previous month -->
       <div style="margin-top:16px;display:flex;gap:8px">
@@ -1643,14 +1707,25 @@ function renderPresupuesto() {
       <div class="bud-summary-val" style="color:${margen>=0?'var(--accent)':'var(--red)'}">${margen>=0?'+':''}${fmt(margen)}</div>
     </div>`;
 
-  const list = document.getElementById('bud-cat-list');
-  list.innerHTML = '';
+  // Use two-column layout on desktop, single on mobile
+  const isDesktop = window.innerWidth >= 900;
+  const listLeft   = document.getElementById('bud-cat-list-left');
+  const listMid    = document.getElementById('bud-cat-list-mid');
+  const listRight  = document.getElementById('bud-cat-list-right');
+  const listSingle = document.getElementById('bud-cat-list');
+  if (listLeft)  listLeft.innerHTML = '';
+  if (listMid)   listMid.innerHTML = '';
+  if (listRight) listRight.innerHTML = '';
+  let list    = listLeft || listSingle;
+  let listFij = isDesktop ? (listMid  || list) : list;
+  let listVar = isDesktop ? (listRight || list) : list;
 
-  function addHeader(icon, title) {
+  function addHeader(icon, title) { addHeaderTo(icon, title, list); }
+  function addHeaderTo(icon, title, target) {
     const d = document.createElement('div');
     d.style.cssText = 'font-family:"Syne",sans-serif;font-weight:700;font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin:16px 0 8px';
     d.textContent = icon + '  ' + title;
-    list.appendChild(d);
+    (target || list).appendChild(d);
   }
 
   function editRow(emoji, label, value, onSave) {
@@ -1687,11 +1762,14 @@ function renderPresupuesto() {
     editRow(line.emoji, line.label, line.importe, val => { saveIncomeLine(mes, line.id, val); updateBudSummary(mes); renderDashboard(); });
   });
 
+  list = listFij;
   addHeader('📋', 'Gastos fijos');
   fijosLines.forEach(line => {
     editRow(line.emoji, line.label, line.importe, val => { saveFijosLine(mes, line.id, val); updateBudSummary(mes); renderDashboard(); });
   });
 
+  // Switch to right column for variables on desktop
+  list = listVar;
   addHeader('📊', 'Gastos variables');
   // Built-in cats
   CATS.filter(c => !FIJOS_CATS.includes(c) && c !== 'Fijos').forEach(cat => {
