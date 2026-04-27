@@ -414,6 +414,9 @@ svg.ring { transform: rotate(-90deg); }
 .bud-summary-val { font-family:"Syne",sans-serif; font-weight:800; font-size:13px; line-height:1.2; word-break:break-all; }
 @media (min-width:600px) { .bud-summary-val { font-size:16px; } }
 
+.ahorro-cuentas-grid { grid-template-columns: 1fr 1fr; }
+@media (min-width: 900px) { .ahorro-cuentas-grid { grid-template-columns: 1fr 1fr 1fr; } }
+
 /* ── DESKTOP LAYOUT ── */
 @media (min-width: 900px) {
   #app { max-width: 1280px; margin: 0 auto; }
@@ -667,7 +670,7 @@ svg.ring { transform: rotate(-90deg); }
 
       <!-- Saldos reales por cuenta -->
       <div class="section-title" style="margin-bottom:10px">💳 Saldos reales por cuenta</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px" id="ahorro-cuentas"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px" id="ahorro-cuentas" class="ahorro-cuentas-grid"></div>
 
       <!-- Saldo inicial -->
       <div style="margin-bottom:16px">
@@ -717,7 +720,12 @@ svg.ring { transform: rotate(-90deg); }
           <div class="bank-card" data-bank="cajamar" onclick="selectBank(this,'cajamar')">
             <div style="font-size:24px">🟢</div>
             <div class="bank-name">Cajamar</div>
-            <div class="bank-fmt">Fecha;Concepto;Debe;Haber</div>
+            <div class="bank-fmt">Cuenta corriente/ahorro</div>
+          </div>
+          <div class="bank-card" data-bank="bankinter_ahorro" onclick="selectBank(this,'bankinter_ahorro')">
+            <div style="font-size:24px">🟠</div>
+            <div class="bank-name">Bankinter Ahorro</div>
+            <div class="bank-fmt">Familia o Pilates</div>
           </div>
         </div>
       </div>
@@ -1482,6 +1490,8 @@ function parseCSV(file) {
         importBuffer = [];
         if (selectedBank === 'caixabank_ahorro') {
           parseCaixaBankAhorro(rows);
+        } else if (selectedBank === 'bankinter_ahorro') {
+          parseBankinterAhorro(rows);
         } else if (selectedBank === 'caixabank') {
           parseCaixaBankRows(rows);
         } else {
@@ -1540,7 +1550,7 @@ function showAhorroImportPreview(movs) {
     categoria: autoAhorroCat(m.concepto),
     bolsa: autoAhorroBolsa(m.concepto),
     tipo: m.importe > 0 ? 'ingreso' : 'gasto',
-    cuenta: 'caixa_ahorro',
+    cuenta: selectedBank === 'caixabank_ahorro' ? 'caixa_ahorro' : selectedBank,
     mes: dateMes(m.fecha)
   }));
 
@@ -1567,6 +1577,32 @@ function showAhorroImportPreview(movs) {
     ${importBuffer.length > 8 ? `<div style="padding:10px 16px;font-size:12px;color:var(--text3);text-align:center">...y ${importBuffer.length-8} más</div>` : ''}`;
 }
 
+function parseBankinterAhorro(rows) {
+  // Same format as Bankinter but routes to Ahorro page
+  let dataStart = 0;
+  for (let i = 0; i < Math.min(rows.length, 15); i++) {
+    const l = String(rows[i]||'').toLowerCase();
+    if ((l.includes('fecha') && l.includes('concepto')) || (l.includes('fecha') && l.includes('importe'))) {
+      dataStart = i + 1; break;
+    }
+  }
+  const movs = [];
+  for (let i = dataStart; i < rows.length; i++) {
+    const r = Array.isArray(rows[i]) ? rows[i] : String(rows[i]).split(';');
+    if (!r || r.length < 3) continue;
+    const fecha   = parseDate(String(r[0]||'').trim());
+    const concepto= String(r[1]||'').trim();
+    const importe = parseFloat(String(r[2]||'').replace(',','.')) || 0;
+    if (!concepto || importe === 0) continue;
+    movs.push({ fecha, concepto, importe, banco: 'bankinter_ahorro' });
+  }
+  // Ask user which sub-account before preview
+  const subCuenta = confirm('¿Es Bankinter Familia?\n(Cancelar = Pilates)') 
+    ? 'bankinter_familia' : 'bankinter_pilates';
+  const subBolsa  = subCuenta === 'bankinter_pilates' ? 'pilates' : null;
+  showAhorroImportPreview(movs.map(m => ({...m, cuenta: subCuenta, bolsa: subBolsa || autoAhorroBolsa(m.concepto)})));
+}
+
 function autoAhorroCat(desc) {
   const d = desc.toLowerCase();
   if (/hipoteca/.test(d)) return 'hipoteca';
@@ -1580,6 +1616,7 @@ function autoAhorroBolsa(desc) {
   if (/hipoteca|seguro|alarma|coche|furgo/.test(d)) return 'hipoteca_casa';
   if (/lourdes|atocha/.test(d)) return 'lourdes';
   if (/anual|seguro coche|ibi|reyes/.test(d)) return 'anual';
+  if (/pilates|prestamo|capital|sala/.test(d)) return 'pilates';
   return 'ahorro_puro';
 }
 
@@ -2305,10 +2342,12 @@ function deleteCustomCat(id) {
 // ─── AHORRO ──────────────────────────────────────────────────
 // Saldos reales de cuentas de ahorro (introducidos manualmente)
 const DEFAULT_AHORRO_CUENTAS = [
-  {id:'caixa_ahorro',  label:'CaixaBank Ahorro', emoji:'🟡', saldo:0},
-  {id:'bankinter',     label:'Bankinter',         emoji:'🟠', saldo:0},
-  {id:'cajamar',       label:'Cajamar',           emoji:'🟢', saldo:0},
-  {id:'efectivo_aho',  label:'Efectivo ahorro',   emoji:'💵', saldo:0},
+  {id:'caixa_ahorro',      label:'CaixaBank Ahorro',    emoji:'🟡', saldo:0},
+  {id:'bankinter_familia', label:'Bankinter Familia',   emoji:'🟠', saldo:0},
+  {id:'bankinter_pilates', label:'Bankinter Pilates',   emoji:'🏋️', saldo:0},
+  {id:'cajamar_disponible',label:'Cajamar Disponible',  emoji:'🟢', saldo:0},
+  {id:'cajamar_capital',   label:'Cajamar Capital Social', emoji:'🏛️', saldo:0},
+  {id:'efectivo_aho',      label:'Efectivo ahorro',     emoji:'💵', saldo:0},
 ];
 
 // Bolsas virtuales
@@ -2321,6 +2360,10 @@ const DEFAULT_AHORRO_BOLSAS = [
    desc:'Gestión pisos Lourdes'},
   {id:'anual',         label:'Fondo Anual',        emoji:'📅', saldo:0,
    desc:'Gastos puntuales del año'},
+  {id:'pilates',       label:'Pilates',            emoji:'🏋️', saldo:0,
+   desc:'Negocio Pilates — préstamos, capital, beneficios'},
+  {id:'capital_social',label:'Capital Social',     emoji:'🏛️', saldo:0,
+   desc:'Cajamar — importe fijo como socio'},
 ];
 
 let ahorroData = {
