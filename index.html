@@ -472,6 +472,7 @@ svg.ring { transform: rotate(-90deg); }
       <button class="nav-tab active" onclick="showPage('dashboard')">Dashboard</button>
       <button class="nav-tab" onclick="showPage('movimientos')">Movimientos</button>
       <button class="nav-tab" onclick="showPage('presupuesto')">Presupuesto</button>
+      <button class="nav-tab" onclick="showPage('ahorro')">Ahorro</button>
       <button class="nav-tab" onclick="showPage('importar')">Importar</button>
     </div>
     <!-- Desktop subtitle -->
@@ -493,6 +494,9 @@ svg.ring { transform: rotate(-90deg); }
     </button>
     <button class="mobile-menu-item" id="mmenu-presupuesto" onclick="showPage('presupuesto');closeMenu()">
       <span class="mm-icon">💰</span> Presupuesto
+    </button>
+    <button class="mobile-menu-item" id="mmenu-ahorro" onclick="showPage('ahorro');closeMenu()">
+      <span class="mm-icon">🐷</span> Ahorro
     </button>
     <button class="mobile-menu-item" id="mmenu-importar" onclick="showPage('importar');closeMenu()">
       <span class="mm-icon">📥</span> Importar
@@ -657,6 +661,29 @@ svg.ring { transform: rotate(-90deg); }
       </div>
     </div>
 
+    <!-- AHORRO -->
+    <div class="page" id="page-ahorro">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;margin-bottom:16px">Ahorro</div>
+
+      <!-- Saldos reales por cuenta -->
+      <div class="section-title" style="margin-bottom:10px">💳 Saldos reales por cuenta</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px" id="ahorro-cuentas"></div>
+
+      <!-- Distribución bolsas virtuales -->
+      <div class="section-title" style="margin-bottom:10px">🪣 Distribución por bolsa</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px" id="ahorro-bolsas"></div>
+
+      <!-- Cuadre -->
+      <div id="ahorro-cuadre" style="margin-bottom:20px"></div>
+
+      <!-- Movimientos de ahorro -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="section-title" style="margin-bottom:0">📋 Movimientos</div>
+        <button onclick="openAhorroModal()" style="padding:8px 14px;border-radius:var(--radius-sm);border:none;background:var(--accent-dark);color:#fff;font-size:13px;font-weight:600;cursor:pointer">+ Añadir</button>
+      </div>
+      <div id="ahorro-movimientos" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+
     <!-- IMPORTAR -->
     <div class="page" id="page-importar">
       <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;margin-bottom:6px">Importar movimientos</h2>
@@ -684,20 +711,6 @@ svg.ring { transform: rotate(-90deg); }
             <div style="font-size:24px">🟢</div>
             <div class="bank-name">Cajamar</div>
             <div class="bank-fmt">Fecha;Concepto;Debe;Haber</div>
-          </div>
-        </div>
-            <div class="bank-name">Bankinter</div>
-            <div class="bank-fmt">FECHA;CONCEPTO;IMPORTE;SALDO</div>
-          </div>
-          <div class="bank-card" data-bank="cajamar" onclick="selectBank(this,'cajamar')">
-            <div style="font-size:24px">🟢</div>
-            <div class="bank-name">Cajamar</div>
-            <div class="bank-fmt">Fecha;Concepto;Debe;Haber;Saldo</div>
-          </div>
-          <div class="bank-card" data-bank="otro" onclick="selectBank(this,'otro')">
-            <div style="font-size:24px">🏦</div>
-            <div class="bank-name">Otro banco</div>
-            <div class="bank-fmt">Detección automática</div>
           </div>
         </div>
       </div>
@@ -1003,10 +1016,11 @@ function loadData() {
     efectivoBalance = parseFloat(localStorage.getItem('finanzas_efectivo') || '0');
   loadBudgets();
   loadCustomCats();
+  loadAhorro();
   } catch(e) { data = []; nextId = 1; }
 }
 function exportJSON() {
-  const payload = { movimientos: data, budgets, customCats, efectivo: efectivoBalance, exportedAt: new Date().toISOString() };
+  const payload = { movimientos: data, budgets, customCats, efectivo: efectivoBalance, ahorro: ahorroData, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1026,6 +1040,7 @@ function importJSON(input) {
       if (d.budgets)    budgets = d.budgets;
       if (d.customCats) customCats = d.customCats;
       if (typeof d.efectivo === 'number') efectivoBalance = d.efectivo;
+      if (d.ahorro)     { ahorroData = d.ahorro; saveAhorro(); }
       saveData(); saveBudgets(); saveCustomCats();
       localStorage.setItem('finanzas_efectivo', efectivoBalance);
       renderDashboard(); renderMovimientos();
@@ -1113,9 +1128,13 @@ function renderDashboard() {
   if (accCaja)  accCaja.textContent  = saldoCajamar !== 0 ? fmt(saldoCajamar) : '—';
   document.getElementById('acc-efectivo').textContent = fmt(efectivoBalance);
 
-  // ── Ahorro acumulado placeholder ─────────────────────────────
+  // ── Ahorro acumulado ─────────────────────────────────────────
   const ahorroEl = document.getElementById('kpi-ahorro');
-  if (ahorroEl) { ahorroEl.textContent = '—'; ahorroEl.style.color = 'var(--text3)'; }
+  if (ahorroEl) {
+    const totalAhorro = (ahorroData.cuentas||[]).reduce((s,c)=>s+c.saldo,0);
+    ahorroEl.textContent = totalAhorro > 0 ? fmt(totalAhorro) : '—';
+    ahorroEl.style.color = totalAhorro > 0 ? 'var(--accent)' : 'var(--text3)';
+  }
 
   // ── Previsión cierre ─────────────────────────────────────────
   // Balance actual + lo que queda por gastar de cada partida del presupuesto
@@ -1694,13 +1713,14 @@ function showPage(name) {
   const mobileItem = document.getElementById('mmenu-'+name);
   if (mobileItem) mobileItem.classList.add('active');
   // Mobile label
-  const labels = {dashboard:'Dashboard',movimientos:'Movimientos',presupuesto:'Presupuesto',importar:'Importar'};
+  const labels = {dashboard:'Dashboard',movimientos:'Movimientos',presupuesto:'Presupuesto',ahorro:'Ahorro',importar:'Importar'};
   const labelEl = document.getElementById('nav-current-label');
   if (labelEl) labelEl.textContent = labels[name] || name;
   document.getElementById('main').scrollTop = 0;
   if (name === 'movimientos') renderMovimientos();
   if (name === 'importar') updateEfectivoDisplay();
   if (name === 'presupuesto') { renderPresupuesto(); }
+  if (name === 'ahorro') { renderAhorro(); }
 }
 
 function toggleMenu() {
@@ -2055,6 +2075,7 @@ async function syncToSheets() {
       budgets,
       customCats,
       efectivo: efectivoBalance,
+      ahorro: ahorroData,
       updatedAt: new Date().toISOString()
     };
     const res = await fetch(url, {
@@ -2089,6 +2110,7 @@ async function syncFromSheets() {
       if (d.budgets)    { budgets = d.budgets; }
       if (d.customCats) { customCats = d.customCats; }
       if (typeof d.efectivo === 'number') { efectivoBalance = d.efectivo; }
+      if (d.ahorro)     { ahorroData = d.ahorro; }
       saveData(); saveBudgets(); saveCustomCats();
       localStorage.setItem('finanzas_efectivo', efectivoBalance);
       renderDashboard(); renderMovimientos();
@@ -2166,21 +2188,256 @@ function deleteCustomCat(id) {
   toast('Categoría eliminada');
 }
 
-// ─── INIT ─────────────────────────────────────────────────────
-// Clear stale seed data from previous versions
-(function() {
+// ─── AHORRO ──────────────────────────────────────────────────
+// Saldos reales de cuentas de ahorro (introducidos manualmente)
+const DEFAULT_AHORRO_CUENTAS = [
+  {id:'caixa_ahorro',  label:'CaixaBank Ahorro', emoji:'🟡', saldo:0},
+  {id:'bankinter',     label:'Bankinter',         emoji:'🟠', saldo:0},
+  {id:'cajamar',       label:'Cajamar',           emoji:'🟢', saldo:0},
+  {id:'efectivo_aho',  label:'Efectivo ahorro',   emoji:'💵', saldo:0},
+];
+
+// Bolsas virtuales
+const DEFAULT_AHORRO_BOLSAS = [
+  {id:'hipoteca_casa', label:'Hipoteca / Casa',  emoji:'🏠', saldo:0,
+   desc:'Pagos fijos: hipoteca, seguros, alarma, coche'},
+  {id:'ahorro_puro',   label:'Ahorro puro',       emoji:'💚', saldo:0,
+   desc:'Ahorro real acumulado'},
+  {id:'lourdes',       label:'Lourdes',            emoji:'👩', saldo:0,
+   desc:'Gestión pisos Lourdes'},
+  {id:'anual',         label:'Fondo Anual',        emoji:'📅', saldo:0,
+   desc:'Gastos puntuales del año'},
+];
+
+let ahorroData = {
+  cuentas: [],   // saldos reales por cuenta
+  bolsas: [],    // distribución virtual
+  movimientos: [], // historial de movimientos
+};
+
+function saveAhorro() { localStorage.setItem('finanzas_ahorro', JSON.stringify(ahorroData)); }
+function loadAhorro() {
   try {
-    const s = localStorage.getItem('finanzas_data');
+    const s = localStorage.getItem('finanzas_ahorro');
     if (s) {
-      const d = JSON.parse(s);
-      // If data looks like old seed (many records with ids in 1-800 range), wipe it
-      if (d.length > 50 && d.filter(x => x.id < 800).length > 40) {
-        localStorage.removeItem('finanzas_data');
-        localStorage.removeItem('finanzas_efectivo');
-      }
+      ahorroData = JSON.parse(s);
+      // Ensure all default cuentas/bolsas exist
+      DEFAULT_AHORRO_CUENTAS.forEach(dc => {
+        if (!ahorroData.cuentas.find(c=>c.id===dc.id)) ahorroData.cuentas.push({...dc});
+      });
+      DEFAULT_AHORRO_BOLSAS.forEach(db => {
+        if (!ahorroData.bolsas.find(b=>b.id===db.id)) ahorroData.bolsas.push({...db});
+      });
+    } else {
+      ahorroData = {
+        cuentas: DEFAULT_AHORRO_CUENTAS.map(c=>({...c})),
+        bolsas:  DEFAULT_AHORRO_BOLSAS.map(b=>({...b})),
+        movimientos: [],
+      };
     }
-  } catch(e) {}
-})();
+  } catch(e) {
+    ahorroData = {
+      cuentas: DEFAULT_AHORRO_CUENTAS.map(c=>({...c})),
+      bolsas:  DEFAULT_AHORRO_BOLSAS.map(b=>({...b})),
+      movimientos: [],
+    };
+  }
+}
+
+function renderAhorro() {
+  renderAhorroCuentas();
+  renderAhorroBolsas();
+  renderAhorroMovimientos();
+}
+
+function renderAhorroCuentas() {
+  const el = document.getElementById('ahorro-cuentas');
+  if (!el) return;
+  const totalCuentas = ahorroData.cuentas.reduce((s,c)=>s+c.saldo,0);
+  el.innerHTML = '';
+  ahorroData.cuentas.forEach(cuenta => {
+    const card = document.createElement('div');
+    card.className = 'kpi-card';
+    card.style.cssText = 'cursor:pointer';
+    card.innerHTML = `
+      <div style="font-size:20px">${cuenta.emoji}</div>
+      <div class="kpi-label">${cuenta.label}</div>
+      <div class="kpi-value" style="font-size:16px">${fmt(cuenta.saldo)}</div>`;
+    card.onclick = () => editAhorroCuenta(cuenta.id);
+    el.appendChild(card);
+  });
+  // Total card
+  const total = document.createElement('div');
+  total.className = 'kpi-card';
+  total.style.cssText = 'grid-column:1/-1;background:var(--bg3)';
+  total.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px">Total en cuentas</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--accent)">${fmt(totalCuentas)}</div>
+    </div>`;
+  el.appendChild(total);
+}
+
+function renderAhorroBolsas() {
+  const el = document.getElementById('ahorro-bolsas');
+  if (!el) return;
+  el.innerHTML = '';
+  const totalBolsas = ahorroData.bolsas.reduce((s,b)=>s+b.saldo,0);
+  const totalCuentas = ahorroData.cuentas.reduce((s,c)=>s+c.saldo,0);
+  const diff = totalCuentas - totalBolsas;
+
+  ahorroData.bolsas.forEach(bolsa => {
+    const pct = totalBolsas > 0 ? (bolsa.saldo / totalBolsas * 100).toFixed(0) : 0;
+    const row = document.createElement('div');
+    row.className = 'cat-row';
+    row.style.cursor = 'pointer';
+    row.innerHTML = `
+      <div class="cat-top">
+        <div class="cat-name">
+          <span class="cat-emoji">${bolsa.emoji}</span>
+          <div>
+            <div>${bolsa.label}</div>
+            <div style="font-size:11px;color:var(--text3);font-weight:400">${bolsa.desc}</div>
+          </div>
+        </div>
+        <div class="cat-amounts">
+          <div class="cat-real" style="color:var(--text)">${fmt(bolsa.saldo)}</div>
+          <div class="cat-bud">${pct}%</div>
+        </div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${pct}%;background:var(--accent)"></div>
+      </div>`;
+    row.onclick = () => editAhorroBolsa(bolsa.id);
+    el.appendChild(row);
+  });
+
+  // Cuadre
+  const cuadreEl = document.getElementById('ahorro-cuadre');
+  if (cuadreEl) {
+    const color = Math.abs(diff) < 0.01 ? 'var(--accent)' : 'var(--red)';
+    cuadreEl.innerHTML = `
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:13px;color:var(--text2)">Cuadre (cuentas - bolsas)</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:${color}">${diff>=0?'+':''}${fmt(diff)}</div>
+      </div>`;
+  }
+}
+
+function renderAhorroMovimientos() {
+  const el = document.getElementById('ahorro-movimientos');
+  if (!el) return;
+  const movs = [...(ahorroData.movimientos||[])].reverse().slice(0,30);
+  if (!movs.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px">Sin movimientos registrados</div>';
+    return;
+  }
+  el.innerHTML = movs.map(m => `
+    <div class="mov-item">
+      <div class="mov-icon">${m.emoji||'💰'}</div>
+      <div class="mov-info">
+        <div class="mov-concepto">${m.concepto}</div>
+        <div class="mov-meta">${m.bolsa||''} · ${m.cuenta||''} · ${m.fecha||''}</div>
+      </div>
+      <div class="mov-amount ${m.importe>=0?'pos':'neg'}">${m.importe>=0?'+':''}${fmt(Math.abs(m.importe))}</div>
+    </div>`).join('');
+}
+
+// ── Edit cuenta saldo inline ──────────────────────────────────
+function editAhorroCuenta(id) {
+  const cuenta = ahorroData.cuentas.find(c=>c.id===id);
+  if (!cuenta) return;
+  const val = parseFloat(prompt(`Saldo actual de ${cuenta.label} (€):`, cuenta.saldo));
+  if (isNaN(val)) return;
+  const diff = val - cuenta.saldo;
+  cuenta.saldo = val;
+  if (diff !== 0) {
+    ahorroData.movimientos = ahorroData.movimientos || [];
+    ahorroData.movimientos.push({
+      id: Date.now(), fecha: new Date().toISOString().split('T')[0],
+      concepto: `Ajuste saldo ${cuenta.label}`,
+      bolsa: '', cuenta: cuenta.label,
+      importe: diff, emoji: cuenta.emoji
+    });
+  }
+  saveAhorro();
+  renderAhorro();
+  renderDashboard();
+  toast(`✓ Saldo ${cuenta.label} actualizado`);
+}
+
+// ── Edit bolsa saldo inline ───────────────────────────────────
+function editAhorroBolsa(id) {
+  const bolsa = ahorroData.bolsas.find(b=>b.id===id);
+  if (!bolsa) return;
+  const val = parseFloat(prompt(`Saldo de bolsa "${bolsa.label}" (€):`, bolsa.saldo));
+  if (isNaN(val)) return;
+  const diff = val - bolsa.saldo;
+  bolsa.saldo = val;
+  if (diff !== 0) {
+    ahorroData.movimientos = ahorroData.movimientos || [];
+    ahorroData.movimientos.push({
+      id: Date.now(), fecha: new Date().toISOString().split('T')[0],
+      concepto: `Ajuste bolsa ${bolsa.label}`,
+      bolsa: bolsa.label, cuenta: '',
+      importe: diff, emoji: bolsa.emoji
+    });
+  }
+  saveAhorro();
+  renderAhorro();
+  toast(`✓ Bolsa ${bolsa.label} actualizada`);
+}
+
+// ── Add movement modal ────────────────────────────────────────
+function openAhorroModal() {
+  const bolsaOpts = ahorroData.bolsas.map(b=>`<option value="${b.id}">${b.emoji} ${b.label}</option>`).join('');
+  const cuentaOpts = ahorroData.cuentas.map(c=>`<option value="${c.id}">${c.emoji} ${c.label}</option>`).join('');
+  const html = `
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+      <div><label class="form-label">Concepto</label>
+        <input class="form-input" id="am-concepto" placeholder="Ej: Traspaso ahorro junio, Pago hipoteca..."></div>
+      <div><label class="form-label">Importe (+ entrada, - salida)</label>
+        <input class="form-input amount-input" id="am-importe" type="number" step="0.01" placeholder="0.00"></div>
+      <div><label class="form-label">Bolsa</label>
+        <select class="form-input" id="am-bolsa"><option value="">— Sin bolsa —</option>${bolsaOpts}</select></div>
+      <div><label class="form-label">Cuenta física</label>
+        <select class="form-input" id="am-cuenta"><option value="">— Sin cuenta —</option>${cuentaOpts}</select></div>
+      <div><label class="form-label">Fecha</label>
+        <input class="form-input" id="am-fecha" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+      <button class="submit-btn" onclick="saveAhorroMov()">Guardar movimiento</button>
+    </div>`;
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.querySelector('#modal .modal-header h2').textContent = 'Movimiento de ahorro';
+  document.querySelector('#modal .modal-body').innerHTML = html;
+}
+
+function saveAhorroMov() {
+  const concepto = document.getElementById('am-concepto').value.trim();
+  const importe  = parseFloat(document.getElementById('am-importe').value);
+  const bolsaId  = document.getElementById('am-bolsa').value;
+  const cuentaId = document.getElementById('am-cuenta').value;
+  const fecha    = document.getElementById('am-fecha').value;
+  if (!concepto || isNaN(importe)) { toast('Rellena concepto e importe'); return; }
+  const bolsa  = ahorroData.bolsas.find(b=>b.id===bolsaId);
+  const cuenta = ahorroData.cuentas.find(c=>c.id===cuentaId);
+  // Update balances
+  if (bolsa)  bolsa.saldo  += importe;
+  if (cuenta) cuenta.saldo += importe;
+  ahorroData.movimientos = ahorroData.movimientos || [];
+  ahorroData.movimientos.push({
+    id: Date.now(), fecha, concepto,
+    bolsa: bolsa?.label||'', cuenta: cuenta?.label||'',
+    importe, emoji: bolsa?.emoji||cuenta?.emoji||'💰'
+  });
+  saveAhorro();
+  closeModal();
+  renderAhorro();
+  renderDashboard();
+  toast('✓ Movimiento guardado');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
 loadData();
 renderDashboard();
 initSyncUI();
