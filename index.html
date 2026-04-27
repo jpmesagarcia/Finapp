@@ -782,14 +782,25 @@ svg.ring { transform: rotate(-90deg); }
       <!-- Reset -->
       <div style="margin-top:12px;margin-bottom:0">
         <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px">
-          <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Borra todos los datos locales. Útil para limpiar datos de prueba.</p>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-            <button onclick="exportJSON()" style="padding:11px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer">💾 Exportar JSON</button>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Copia de seguridad y gestión de datos.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+            <button onclick="exportJSON()" style="padding:11px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer">💾 Exportar backup</button>
             <label style="padding:11px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;text-align:center">
-              📂 Importar JSON<input type="file" accept=".json" onchange="importJSON(this)" style="display:none">
+              📂 Restaurar backup<input type="file" accept=".json" onchange="importJSON(this)" style="display:none">
             </label>
           </div>
-          <button onclick="resetAll()" style="width:100%;padding:12px;border-radius:var(--radius-sm);border:1px solid var(--red);background:transparent;color:var(--red);font-size:13px;font-weight:600;cursor:pointer">🗑️ Borrar todos los datos</button>
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Borrar datos</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button onclick="resetMovimientos()" style="padding:11px;border-radius:var(--radius-sm);border:1px solid var(--orange);background:transparent;color:var(--orange);font-size:13px;font-weight:600;cursor:pointer;text-align:left">
+              🗓️ Borrar movimientos del año — empezar año nuevo
+            </button>
+            <button onclick="resetAhorro()" style="padding:11px;border-radius:var(--radius-sm);border:1px solid var(--orange);background:transparent;color:var(--orange);font-size:13px;font-weight:600;cursor:pointer;text-align:left">
+              🐷 Resetear ahorro — mantener saldos actuales como inicio
+            </button>
+            <button onclick="resetAll()" style="padding:11px;border-radius:var(--radius-sm);border:1px solid var(--red);background:transparent;color:var(--red);font-size:13px;font-weight:600;cursor:pointer;text-align:left">
+              💣 Borrar TODO — volver a cero completo
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1064,13 +1075,46 @@ function importJSON(input) {
   };
   reader.readAsText(file);
 }
+function resetMovimientos() {
+  if (!confirm('¿Borrar todos los movimientos del año?\n\nEsto borra los ingresos y gastos pero mantiene:\n• Presupuestos\n• Configuración de ahorro y saldos\n• Categorías personalizadas')) return;
+  // Export backup first automatically
+  exportJSON();
+  data = []; nextId = 1; efectivoBalance = 0;
+  saveData();
+  localStorage.setItem('finanzas_efectivo', '0');
+  renderDashboard(); renderMovimientos();
+  toast('✓ Movimientos borrados. Backup descargado automáticamente.');
+}
+
+function resetAhorro() {
+  if (!confirm('¿Resetear el historial de ahorro?\n\nLos saldos actuales se mantienen como punto de partida.\nSe borra el historial de movimientos de ahorro.')) return;
+  ahorroData.movimientos = [{
+    id: Date.now(), fecha: new Date().toISOString().split('T')[0],
+    concepto: '📍 Inicio de año — saldo arrastrado',
+    bolsa: 'Todas', cuenta: 'Todas', importe: 0, emoji: '📍'
+  }];
+  saveAhorro();
+  renderAhorro();
+  toast('✓ Historial de ahorro reseteado. Saldos mantenidos.');
+}
+
 function resetAll() {
-  if (!confirm('¿Borrar TODOS los datos y empezar desde cero?')) return;
+  if (!confirm('⚠️ ¿Borrar ABSOLUTAMENTE TODOS los datos?\n\nEsto incluye movimientos, presupuestos, ahorro y configuración.\nSe descargará un backup antes de borrar.')) return;
+  exportJSON();
   localStorage.removeItem('finanzas_data');
   localStorage.removeItem('finanzas_efectivo');
+  localStorage.removeItem('finanzas_budgets');
+  localStorage.removeItem('finanzas_ahorro');
+  localStorage.removeItem('finanzas_custom_cats');
   data = []; nextId = 1; efectivoBalance = 0;
+  budgets = {}; customCats = [];
+  ahorroData = {
+    cuentas: DEFAULT_AHORRO_CUENTAS.map(c=>({...c})),
+    bolsas:  DEFAULT_AHORRO_BOLSAS.map(b=>({...b})),
+    movimientos: [],
+  };
   renderDashboard(); renderMovimientos();
-  toast('✓ Datos borrados. Empezamos de cero.');
+  toast('✓ Todo borrado. Backup descargado.');
 }
 function saveData() {
   localStorage.setItem('finanzas_data', JSON.stringify(data));
@@ -1494,6 +1538,8 @@ function parseCSV(file) {
           parseBankinterAhorro(rows);
         } else if (selectedBank === 'caixabank') {
           parseCaixaBankRows(rows);
+        } else if (selectedBank === 'cajamar') {
+          parseCajamarRows(rows);
         } else {
           parseCaixaBankRows(rows); // fallback
         }
@@ -1531,11 +1577,12 @@ function parseCaixaBankAhorro(rows) {
     const r = rows[i];
     if (!r || r.length < 5) continue;
     const rawFecha = String(r[0] || '').trim();
-    const fecha    = parseDate(rawFecha.split(' ')[0]);
+    if (!rawFecha) continue;
+    const fecha    = parseDate(rawFecha.split(' ')[0].split('T')[0]);
     const concepto = String(r[2] || '').trim();
     if (!concepto || /^fecha$/i.test(concepto) || /^movimiento$/i.test(concepto)) continue;
-    const rawImporte = String(r[4] || '').trim();
-    const importe    = parseFloat(rawImporte.replace(',','.')) || 0;
+    const raw4 = r[4];
+    const importe = typeof raw4 === 'number' ? raw4 : parseFloat(String(raw4||'').replace(',','.').replace(/[^\d.\-]/g,'')) || 0;
     if (importe === 0) continue;
     movs.push({ fecha, concepto, importe, banco: 'caixabank_ahorro' });
   }
@@ -1697,8 +1744,8 @@ function parseBankinter(lines) {
 }
 
 function parseCajamar(lines) {
-  // Format: Fecha;Fecha Valor;Concepto;Debe;Haber;Saldo
-  // Debe = cargo (positive number, it's a debit), Haber = abono (positive number, it's a credit)
+  // Cajamar format (CSV): Fecha;F.valor;Concepto;Importe;Saldo
+  // Single Importe column (positive=ingreso, negative=gasto)
   let dataStart = 0;
   for (let i = 0; i < Math.min(lines.length, 10); i++) {
     if (/fecha/i.test(lines[i])) { dataStart = i + 1; break; }
@@ -1706,16 +1753,36 @@ function parseCajamar(lines) {
   for (let i = dataStart; i < lines.length; i++) {
     const cols = splitCSVLine(lines[i]);
     if (cols.length < 4) continue;
-    const fecha = parseDate(cols[0]);
-    const concepto = (cols[2] || '').replace(/"/g,'').trim();
-    const debe = parseNum(cols[3]);   // cargo = gasto
-    const haber = parseNum(cols[4]);  // abono = ingreso
-    if (!concepto) continue;
-    let importe = 0, tipo = 'gasto';
-    if (haber > 0) { importe = haber; tipo = 'ingreso'; }
-    else if (debe > 0) { importe = -debe; tipo = 'gasto'; }
+    const fecha    = parseDate(String(cols[0]||'').trim().split(' ')[0].split('T')[0]);
+    const concepto = String(cols[2]||'').replace(/"/g,'').trim();
+    if (!concepto || /^concepto$/i.test(concepto)) continue;
+    const importe  = parseNum(cols[3]);
     if (importe === 0) continue;
-    importBuffer.push({ fecha, concepto, importe, categoria: autoCat(concepto), tipo, cuenta: 'banco', banco: selectedBank, mes: currentMonth });
+    importBuffer.push({ fecha, concepto, importe, categoria: autoCat(concepto),
+      tipo: importe>0?'ingreso':'gasto', cuenta: 'banco', banco: selectedBank, mes: dateMes(fecha) });
+  }
+}
+
+function parseCajamarRows(rows) {
+  // XLS version of Cajamar: Fecha | F.valor | Concepto | Importe | Saldo
+  let dataStart = 1; // row 0 is header
+  for (let i = 0; i < Math.min(rows.length, 5); i++) {
+    const r = rows[i];
+    if (r && r.some && r.some(cell => /concepto/i.test(String(cell||'').trim()))) { dataStart = i+1; break; }
+  }
+  for (let i = dataStart; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r || r.length < 4) continue;
+    const rawFecha = String(r[0]||'').trim();
+    if (!rawFecha) continue;
+    const fecha    = parseDate(rawFecha.split(' ')[0].split('T')[0]);
+    const concepto = String(r[2]||'').trim();
+    if (!concepto || /^concepto$/i.test(concepto)) continue;
+    const raw3 = r[3];
+    const importe = typeof raw3 === 'number' ? raw3 : parseFloat(String(raw3||'').replace(',','.').replace(/[^\d.\-]/g,'')) || 0;
+    if (importe === 0) continue;
+    importBuffer.push({ fecha, concepto, importe, categoria: autoCat(concepto),
+      tipo: importe>0?'ingreso':'gasto', cuenta: 'banco', banco: selectedBank, mes: dateMes(fecha) });
   }
 }
 
