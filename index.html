@@ -637,6 +637,9 @@ svg.ring { transform: rotate(-90deg); }
               ⬆️ Guardar
             </button>
           </div>
+          <button onclick="importFromForm()" style="width:100%;padding:13px;margin-top:8px;border-radius:var(--radius-sm);border:none;background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;font-size:14px;font-weight:700;cursor:pointer">
+            📋 Importar desde formulario
+          </button>
           <p style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">
             ¿No tienes la URL? Sigue la guía en 
             <a href="https://github.com" target="_blank" style="color:var(--accent2)">GitHub</a> 
@@ -1865,6 +1868,32 @@ function getApiUrl() {
 function setSyncStatus(msg, color='var(--text3)') {
   const el = document.getElementById('sync-status');
   if (el) el.innerHTML = `<span style="color:${color}">${msg}</span>`;
+}
+
+async function importFromForm() {
+  const url = getApiUrl();
+  if (!url) { toast('Introduce la URL del Apps Script primero'); return; }
+  setSyncStatus('⏳ Leyendo formulario...');
+  try {
+    const res  = await fetch(url + '?action=loadForm&t=' + Date.now());
+    const json = await res.json();
+    if (!json.ok) { setSyncStatus('❌ Error: ' + (json.error || 'desconocido'), 'var(--red)'); return; }
+
+    const movs = json.movimientos || [];
+    if (movs.length === 0) {
+      setSyncStatus('✅ Sin movimientos nuevos en el formulario', 'var(--text3)');
+      toast('Sin movimientos nuevos');
+      return;
+    }
+
+    // Show preview before confirming
+    importBuffer = movs.map(m => ({...m}));
+    showImportPreview();
+    setSyncStatus(`✅ ${movs.length} movimiento${movs.length>1?'s':''} encontrado${movs.length>1?'s':''} en el formulario`, 'var(--accent)');
+  } catch(err) {
+    setSyncStatus('❌ No se pudo conectar. Revisa la URL.', 'var(--red)');
+    console.error(err);
+  }
 }
 
 async function syncToSheets() {
