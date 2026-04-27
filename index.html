@@ -47,6 +47,50 @@ nav {
   box-shadow: 0 1px 12px rgba(0,0,0,0.06);
 }
 .nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; color: var(--text); }
+
+/* Hamburger button — mobile only */
+.hamburger-btn {
+  display: none;
+  width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--card); color: var(--text); font-size: 18px; cursor: pointer;
+  align-items: center; justify-content: center;
+}
+.nav-current-label {
+  display: none;
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px;
+  color: var(--text); flex: 1; text-align: center;
+}
+.mobile-menu {
+  display: none; flex-direction: column;
+  position: fixed; top: 66px; left: 0; right: 0;
+  background: var(--card); border-bottom: 1px solid var(--border);
+  z-index: 150; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  animation: slideDown .2s ease;
+}
+@keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+.mobile-menu.open { display: flex; }
+.mobile-menu-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 24px; border: none; background: transparent;
+  color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 500;
+  cursor: pointer; border-bottom: 1px solid var(--border); text-align: left;
+  transition: background .15s;
+}
+.mobile-menu-item:last-child { border-bottom: none; }
+.mobile-menu-item:active { background: var(--bg3); }
+.mobile-menu-item.active { color: var(--accent); font-weight: 700; background: rgba(26,158,110,0.06); }
+.mm-icon { font-size: 20px; width: 28px; text-align: center; }
+.mobile-menu-overlay {
+  display: none; position: fixed; inset: 0; z-index: 140;
+  background: rgba(0,0,0,0.2); backdrop-filter: blur(2px);
+}
+.mobile-menu-overlay.open { display: block; }
+
+@media (max-width: 899px) {
+  .hamburger-btn { display: flex; }
+  .nav-current-label { display: block; }
+  #nav-tabs-desktop { display: none; }
+}
 @media (min-width: 900px) {
   .nav-logo { font-size: 20px; }
   .nav-tab { padding: 7px 18px; font-size: 14px; }
@@ -409,14 +453,36 @@ svg.ring { transform: rotate(-90deg); }
 <div id="app">
   <nav>
     <div class="nav-logo">fin<span>.</span>app</div>
-    <div class="nav-tabs">
+    <!-- Desktop tabs -->
+    <div class="nav-tabs" id="nav-tabs-desktop">
       <button class="nav-tab active" onclick="showPage('dashboard')">Dashboard</button>
       <button class="nav-tab" onclick="showPage('movimientos')">Movimientos</button>
       <button class="nav-tab" onclick="showPage('presupuesto')">Presupuesto</button>
       <button class="nav-tab" onclick="showPage('importar')">Importar</button>
     </div>
-    <button class="add-btn" onclick="openModal()" title="Añadir movimiento">+</button>
+    <!-- Mobile current page label -->
+    <div class="nav-current-label" id="nav-current-label">Dashboard</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="add-btn" onclick="openModal()" title="Añadir movimiento">+</button>
+      <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMenu()">☰</button>
+    </div>
   </nav>
+  <!-- Mobile dropdown menu -->
+  <div class="mobile-menu" id="mobile-menu">
+    <button class="mobile-menu-item active" id="mmenu-dashboard" onclick="showPage('dashboard');closeMenu()">
+      <span class="mm-icon">🏠</span> Dashboard
+    </button>
+    <button class="mobile-menu-item" id="mmenu-movimientos" onclick="showPage('movimientos');closeMenu()">
+      <span class="mm-icon">📋</span> Movimientos
+    </button>
+    <button class="mobile-menu-item" id="mmenu-presupuesto" onclick="showPage('presupuesto');closeMenu()">
+      <span class="mm-icon">💰</span> Presupuesto
+    </button>
+    <button class="mobile-menu-item" id="mmenu-importar" onclick="showPage('importar');closeMenu()">
+      <span class="mm-icon">📥</span> Importar
+    </button>
+  </div>
+  <div class="mobile-menu-overlay" id="mobile-menu-overlay" onclick="closeMenu()"></div>
 
   <div id="main">
     <!-- DASHBOARD -->
@@ -1557,12 +1623,31 @@ function updateEfectivoDisplay() {
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.mobile-menu-item').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
-  document.querySelector(`[onclick="showPage('${name}')"]`).classList.add('active');
+  // Desktop tabs
+  const desktopTab = document.querySelector(`#nav-tabs-desktop [onclick="showPage('${name}')"]`);
+  if (desktopTab) desktopTab.classList.add('active');
+  // Mobile menu item
+  const mobileItem = document.getElementById('mmenu-'+name);
+  if (mobileItem) mobileItem.classList.add('active');
+  // Mobile label
+  const labels = {dashboard:'Dashboard',movimientos:'Movimientos',presupuesto:'Presupuesto',importar:'Importar'};
+  const labelEl = document.getElementById('nav-current-label');
+  if (labelEl) labelEl.textContent = labels[name] || name;
   document.getElementById('main').scrollTop = 0;
   if (name === 'movimientos') renderMovimientos();
   if (name === 'importar') updateEfectivoDisplay();
   if (name === 'presupuesto') { renderPresupuesto(); }
+}
+
+function toggleMenu() {
+  document.getElementById('mobile-menu').classList.toggle('open');
+  document.getElementById('mobile-menu-overlay').classList.toggle('open');
+}
+function closeMenu() {
+  document.getElementById('mobile-menu').classList.remove('open');
+  document.getElementById('mobile-menu-overlay').classList.remove('open');
 }
 
 // ─── TOAST ────────────────────────────────────────────────────
