@@ -690,10 +690,9 @@ svg.ring { transform: rotate(-90deg); }
         <div class="section-title">Sincronización con Google Sheets</div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px">
           <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Conecta con tu Google Sheet para tener los datos sincronizados entre móvil y ordenador.</p>
-          <div style="margin-bottom:10px">
-            <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">URL del Apps Script</label>
-            <input id="api-url-input" class="form-input" type="url" placeholder="https://script.google.com/macros/s/..." style="font-size:12px"
-              value="" oninput="localStorage.setItem('finanzas_api_url',this.value)">
+          <div style="margin-bottom:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--radius-sm)">
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Apps Script conectado</div>
+            <div style="font-size:11px;color:var(--accent);font-weight:600">✅ Google Sheets sincronizado</div>
           </div>
           <div id="sync-status" style="font-size:12px;color:var(--text3);margin-bottom:10px;min-height:16px"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -1948,8 +1947,9 @@ function resetBudgetMonth() {
 }
 
 // ─── GOOGLE SHEETS SYNC ──────────────────────────────────────
+const API_URL = 'https://script.google.com/macros/s/AKfycbwx2Z5Ta4YODxoBEZFkw4sV93pOe71t7xCnJwXC_5EBptS530Xxv5RCylNuUDRYFJWN/exec';
 function getApiUrl() {
-  return localStorage.getItem('finanzas_api_url') || '';
+  return API_URL;
 }
 function setSyncStatus(msg, color='var(--text3)') {
   const el = document.getElementById('sync-status');
@@ -2055,9 +2055,6 @@ function initImportZone() {
 }
 
 function initSyncUI() {
-  const saved = localStorage.getItem('finanzas_api_url');
-  const input = document.getElementById('api-url-input');
-  if (saved && input) input.value = saved;
   const lastSync = localStorage.getItem('finanzas_last_sync');
   if (lastSync) {
     const d = new Date(lastSync);
