@@ -2634,14 +2634,16 @@ function saveNewIncomeLine(mes) {
   const id = 'custom_inc_' + Date.now();
   customIncomeLines.push({id, label, emoji, importe});
   saveCustomIncomeLines();
-  // Save the importe for this month
   if (!budgets[mes]) budgets[mes] = {};
   if (!budgets[mes].income) budgets[mes].income = {};
   budgets[mes].income[id] = importe;
   saveBudgets();
-  closeModal();
+  // Close modal without resetting corriente inputs
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
   renderPresupuesto();
-  toast(`✓ Ingreso "${label}" añadido`);
+  updateBudSummary(mes);
+  toast('✓ Ingreso "' + label + '" añadido');
 }
 
 function openNewCatModal() {
