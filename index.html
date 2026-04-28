@@ -1075,6 +1075,7 @@ const DEFAULT_BUDGET = {Comida:450,Transporte:15,Niños:150,Gasolina:230,'Gastos
 // budgets stored per month: { 'Abril': { Comida: 450, ... }, ... }
 let budgets = {};
 let customCats = []; // [{id, label, emoji, importe}]
+let customIncomeLines = []; // ingresos extra en presupuesto
 function saveCustomCats() { localStorage.setItem('finanzas_custom_cats', JSON.stringify(customCats)); }
 function loadCustomCats() {
   try { customCats = JSON.parse(localStorage.getItem('finanzas_custom_cats') || '[]'); }
@@ -1085,7 +1086,9 @@ function getBudget(mes) {
 }
 function getIncomeLines(mes) {
   const overrides = (budgets[mes] && budgets[mes].income) || {};
-  return DEFAULT_INCOME_LINES.map(l => ({...l, importe: overrides[l.id] ?? l.importe}));
+  const defaults = DEFAULT_INCOME_LINES.map(l => ({...l, importe: overrides[l.id] ?? l.importe}));
+  const customs  = customIncomeLines.map(l => ({...l, importe: (budgets[mes]?.income?.[l.id]) ?? l.importe}));
+  return [...defaults, ...customs];
 }
 function getFijosLines(mes) {
   const overrides = (budgets[mes] && budgets[mes].fijos) || {};
@@ -1129,6 +1132,7 @@ function loadData() {
     efectivoBalance = parseFloat(localStorage.getItem('finanzas_efectivo') || '0');
   loadBudgets();
   loadCustomCats();
+  loadCustomIncomeLines();
   loadAhorro();
   } catch(e) { data = []; nextId = 1; }
 }
@@ -2342,6 +2346,47 @@ function renderPresupuesto() {
     editRow(line.emoji, line.label, line.importe, val => { saveIncomeLine(mes, line.id, val); updateBudSummary(mes); renderDashboard(); });
   });
 
+  // Custom income lines
+  customIncomeLines.forEach((line, idx) => {
+    const val = (budgets[mes]?.income?.[line.id]) ?? line.importe;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:12px';
+    const inp = document.createElement('input');
+    inp.type = 'number'; inp.value = val || ''; inp.placeholder = '0'; inp.step = '1';
+    inp.style.cssText = 'width:88px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:"Syne",sans-serif;font-size:14px;font-weight:700;padding:7px 10px;text-align:right;outline:none;-webkit-appearance:none';
+    inp.addEventListener('focus', () => { inp.style.borderColor='var(--accent)'; inp.select(); });
+    inp.addEventListener('blur',  () => { inp.style.borderColor='var(--border)'; saveIncomeLine(mes, line.id, parseFloat(inp.value)||0); updateBudSummary(mes); renderDashboard(); });
+    inp.addEventListener('keydown', e => { if(e.key==='Enter') inp.blur(); });
+    const emojiEl = document.createElement('span');
+    emojiEl.style.cssText = 'font-size:18px;width:24px;text-align:center;flex-shrink:0';
+    emojiEl.textContent = line.emoji || '💰';
+    const labelEl = document.createElement('span');
+    labelEl.style.cssText = 'flex:1;font-size:14px;font-weight:500;color:var(--text)';
+    labelEl.textContent = line.label;
+    const delBtn = document.createElement('button');
+    delBtn.innerHTML = '×';
+    delBtn.style.cssText = 'background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:0 2px';
+    delBtn.title = 'Eliminar';
+    delBtn.onclick = () => {
+      if (!confirm(`¿Eliminar "${line.label}"?`)) return;
+      customIncomeLines.splice(idx, 1);
+      saveCustomIncomeLines();
+      renderPresupuesto();
+    };
+    const unitEl = document.createElement('span');
+    unitEl.style.cssText = 'font-size:12px;color:var(--text3);flex-shrink:0';
+    unitEl.textContent = '€/mes';
+    row.appendChild(emojiEl); row.appendChild(labelEl); row.appendChild(inp); row.appendChild(unitEl); row.appendChild(delBtn);
+    list.appendChild(row);
+  });
+
+  // Add new income button
+  const addIncomeBtnEl = document.createElement('button');
+  addIncomeBtnEl.style.cssText = 'margin-top:10px;width:100%;padding:11px;border-radius:var(--radius-sm);border:1px dashed var(--border);background:transparent;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px';
+  addIncomeBtnEl.innerHTML = '<span style="font-size:18px">+</span> Nuevo ingreso';
+  addIncomeBtnEl.onclick = () => openNewIncomeModal(mes);
+  list.appendChild(addIncomeBtnEl);
+
   list = listFij;
   addHeader('📋', 'Gastos fijos');
   fijosLines.forEach(line => {
@@ -2483,6 +2528,7 @@ async function syncToSheets() {
       movimientos: data,
       budgets,
       customCats,
+      customIncomeLines,
       efectivo: efectivoBalance,
       ahorro: ahorroData,
       updatedAt: new Date().toISOString()
@@ -2520,6 +2566,9 @@ async function syncFromSheets() {
       if (d.customCats) { customCats = d.customCats; }
       if (typeof d.efectivo === 'number') { efectivoBalance = d.efectivo; }
       if (d.ahorro)     { ahorroData = d.ahorro; }
+      if (d.customIncomeLines) { customIncomeLines = d.customIncomeLines; saveCustomIncomeLines(); }
+      if (d.customIncomeLines) { customIncomeLines = d.customIncomeLines; saveCustomIncomeLines(); }
+      if (d.customIncomeLines) { customIncomeLines = d.customIncomeLines; saveCustomIncomeLines(); }
       saveData(); saveBudgets(); saveCustomCats();
       localStorage.setItem('finanzas_efectivo', efectivoBalance);
       renderDashboard(); renderMovimientos();
@@ -2561,6 +2610,40 @@ function initSyncUI() {
 }
 
 // ─── CUSTOM CATEGORIES ───────────────────────────────────────
+function openNewIncomeModal(mes) {
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.querySelector('#modal .modal-header h2').textContent = 'Nuevo ingreso';
+  document.querySelector('#modal .modal-body').innerHTML = `
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+      <div><label class="form-label">Nombre del ingreso</label>
+        <input class="form-input" id="new-income-label" placeholder="Ej: Alquiler garaje, Dividendos..."></div>
+      <div><label class="form-label">Emoji</label>
+        <input class="form-input" id="new-income-emoji" placeholder="💰" maxlength="2" style="width:80px"></div>
+      <div><label class="form-label">Importe mensual por defecto (€)</label>
+        <input class="form-input amount-input" id="new-income-importe" type="number" step="0.01" placeholder="0"></div>
+      <button class="submit-btn" onclick="saveNewIncomeLine('${mes}')">Añadir ingreso</button>
+    </div>`;
+}
+
+function saveNewIncomeLine(mes) {
+  const label   = document.getElementById('new-income-label').value.trim();
+  const emoji   = document.getElementById('new-income-emoji').value.trim() || '💰';
+  const importe = parseFloat(document.getElementById('new-income-importe').value) || 0;
+  if (!label) { toast('Introduce un nombre'); return; }
+  const id = 'custom_inc_' + Date.now();
+  customIncomeLines.push({id, label, emoji, importe});
+  saveCustomIncomeLines();
+  // Save the importe for this month
+  if (!budgets[mes]) budgets[mes] = {};
+  if (!budgets[mes].income) budgets[mes].income = {};
+  budgets[mes].income[id] = importe;
+  saveBudgets();
+  closeModal();
+  renderPresupuesto();
+  toast(`✓ Ingreso "${label}" añadido`);
+}
+
 function openNewCatModal() {
   document.getElementById('overlay-newcat').classList.add('open');
   document.body.style.overflow = 'hidden';
