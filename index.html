@@ -1081,6 +1081,13 @@ function loadCustomCats() {
   try { customCats = JSON.parse(localStorage.getItem('finanzas_custom_cats') || '[]'); }
   catch(e) { customCats = []; }
 }
+function saveCustomIncomeLines() {
+  localStorage.setItem('finanzas_custom_income', JSON.stringify(customIncomeLines));
+}
+function loadCustomIncomeLines() {
+  try { customIncomeLines = JSON.parse(localStorage.getItem('finanzas_custom_income') || '[]'); } catch(e) {}
+}
+
 function getBudget(mes) {
   return (budgets[mes] && budgets[mes].cats) ? budgets[mes].cats : {...DEFAULT_BUDGET};
 }
@@ -2614,22 +2621,30 @@ function openNewIncomeModal(mes) {
   document.getElementById('overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   document.querySelector('#modal .modal-header h2').textContent = 'Nuevo ingreso';
-  document.querySelector('#modal .modal-body').innerHTML = `
-    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
-      <div><label class="form-label">Nombre del ingreso</label>
-        <input class="form-input" id="new-income-label" placeholder="Ej: Alquiler garaje, Dividendos..."></div>
-      <div><label class="form-label">Emoji</label>
-        <input class="form-input" id="new-income-emoji" placeholder="💰" maxlength="2" style="width:80px"></div>
-      <div><label class="form-label">Importe mensual por defecto (€)</label>
-        <input class="form-input amount-input" id="new-income-importe" type="number" step="0.01" placeholder="0"></div>
-      <button class="submit-btn" onclick="saveNewIncomeLine('${mes}')">Añadir ingreso</button>
-    </div>`;
+  const body = document.querySelector('#modal .modal-body');
+  body.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'padding:20px;display:flex;flex-direction:column;gap:14px';
+  wrap.innerHTML = `
+    <div><label class="form-label">Nombre del ingreso</label>
+      <input class="form-input" id="new-income-label" placeholder="Ej: Alquiler garaje, Dividendos..."></div>
+    <div><label class="form-label">Emoji (opcional)</label>
+      <input class="form-input" id="new-income-emoji" placeholder="💰" maxlength="2" style="width:80px"></div>
+    <div><label class="form-label">Importe mensual (€)</label>
+      <input class="form-input amount-input" id="new-income-importe" type="number" step="0.01" placeholder="0"></div>`;
+  const btn = document.createElement('button');
+  btn.className = 'submit-btn';
+  btn.textContent = 'Añadir ingreso';
+  btn.onclick = () => saveNewIncomeLine(mes);
+  wrap.appendChild(btn);
+  body.appendChild(wrap);
+  setTimeout(() => document.getElementById('new-income-label')?.focus(), 100);
 }
 
 function saveNewIncomeLine(mes) {
-  const label   = document.getElementById('new-income-label').value.trim();
-  const emoji   = document.getElementById('new-income-emoji').value.trim() || '💰';
-  const importe = parseFloat(document.getElementById('new-income-importe').value) || 0;
+  const label   = (document.getElementById('new-income-label')?.value || '').trim();
+  const emoji   = (document.getElementById('new-income-emoji')?.value || '').trim() || '💰';
+  const importe = parseFloat(document.getElementById('new-income-importe')?.value) || 0;
   if (!label) { toast('Introduce un nombre'); return; }
   const id = 'custom_inc_' + Date.now();
   customIncomeLines.push({id, label, emoji, importe});
@@ -2638,7 +2653,6 @@ function saveNewIncomeLine(mes) {
   if (!budgets[mes].income) budgets[mes].income = {};
   budgets[mes].income[id] = importe;
   saveBudgets();
-  // Close modal without resetting corriente inputs
   document.getElementById('overlay').classList.remove('open');
   document.body.style.overflow = '';
   renderPresupuesto();
