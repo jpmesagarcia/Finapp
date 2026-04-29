@@ -1775,9 +1775,10 @@ function showAhorroImportPreview(movs) {
     mes: dateMes(m.fecha)
   }));
 
-  const area = document.getElementById('import-preview-area-ahorro') || document.getElementById('import-preview-area');
+  const area = document.getElementById('import-preview-area-ahorro');
+  if (!area) { toast('Error: área de preview no encontrada'); return; }
   area.style.display = 'block';
-  const preview = document.getElementById('import-preview-ahorro') || document.getElementById('import-preview');
+  const preview = document.getElementById('import-preview-ahorro');
   const bolsaOpts = ahorroData.bolsas.map(b=>`<option value="${b.id}">${b.emoji} ${b.label}</option>`).join('');
   const bankNames = {'caixabank_ahorro':'CaixaBank Ahorro','bankinter_ahorro':'Bankinter','cajamar':'Cajamar'};
   const bankTitle = bankNames[selectedBank] || selectedBank;
@@ -2032,9 +2033,17 @@ function autoCat(desc) {
 }
 function showImportPreview() {
   if (!importBuffer.length) { toast('No se detectaron movimientos válidos'); return; }
-  const area = document.getElementById('import-preview-area-ahorro') || document.getElementById('import-preview-area');
+  // Use the area in the currently active page
+  const activePage = document.querySelector('.page.active')?.id || '';
+  const isAhorro = activePage === 'page-ahorro';
+  const area = isAhorro
+    ? document.getElementById('import-preview-area-ahorro')
+    : document.getElementById('import-preview-area');
+  if (!area) { toast('Error: área de preview no encontrada'); return; }
   area.style.display = 'block';
-  const preview = document.getElementById('import-preview-ahorro') || document.getElementById('import-preview');
+  const preview = isAhorro
+    ? document.getElementById('import-preview-ahorro')
+    : document.getElementById('import-preview');
   preview.innerHTML = `
     <div class="import-preview-header">
       <h4>Vista previa de importación</h4>
