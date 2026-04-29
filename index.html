@@ -2726,6 +2726,42 @@ let ahorroData = {
 
 function saveAhorro() { localStorage.setItem('finanzas_ahorro', JSON.stringify(ahorroData)); }
 
+function openAhorroEditModal(title, currentVal, onSave) {
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.querySelector('#modal .modal-header h2').textContent = title;
+  const body = document.querySelector('#modal .modal-body');
+  body.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'padding:20px;display:flex;flex-direction:column;gap:14px';
+  const label = document.createElement('label');
+  label.className = 'form-label';
+  label.textContent = 'Saldo (€)';
+  const inp = document.createElement('input');
+  inp.className = 'form-input amount-input';
+  inp.type = 'number';
+  inp.step = '0.01';
+  inp.value = currentVal || '';
+  inp.placeholder = '0,00';
+  inp.style.fontSize = '20px';
+  setTimeout(() => { inp.focus(); inp.select(); }, 100);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') btn.click(); });
+  const btn = document.createElement('button');
+  btn.className = 'submit-btn';
+  btn.textContent = 'Guardar';
+  btn.onclick = () => {
+    const val = parseFloat(inp.value.replace(',','.'));
+    if (isNaN(val)) { toast('Introduce un número válido'); return; }
+    document.getElementById('overlay').classList.remove('open');
+    document.body.style.overflow = '';
+    onSave(val);
+  };
+  wrap.appendChild(label);
+  wrap.appendChild(inp);
+  wrap.appendChild(btn);
+  body.appendChild(wrap);
+}
+
 function establecerSaldoInicial() {
   // Opens a guided flow to set starting balances for all cuentas and bolsas
   const lines = [
@@ -3072,45 +3108,46 @@ function renderMovsCuentas(el, movs) {
 function editAhorroCuenta(id) {
   const cuenta = ahorroData.cuentas.find(c=>c.id===id);
   if (!cuenta) return;
-  const val = parseFloat(prompt(`Saldo actual de ${cuenta.label} (€):`, cuenta.saldo));
-  if (isNaN(val)) return;
-  const diff = val - cuenta.saldo;
-  cuenta.saldo = val;
-  if (diff !== 0) {
-    ahorroData.movimientos = ahorroData.movimientos || [];
-    ahorroData.movimientos.push({
-      id: Date.now(), fecha: new Date().toISOString().split('T')[0],
-      concepto: `Ajuste saldo ${cuenta.label}`,
-      bolsa: '', cuenta: cuenta.label,
-      importe: diff, emoji: cuenta.emoji
-    });
-  }
-  saveAhorro();
-  renderAhorro();
-  renderDashboard();
-  toast(`✓ Saldo ${cuenta.label} actualizado`);
+  openAhorroEditModal(
+    `${cuenta.emoji} ${cuenta.label}`, cuenta.saldo,
+    (val) => {
+      const diff = val - cuenta.saldo;
+      cuenta.saldo = val;
+      if (diff !== 0) {
+        ahorroData.movimientos = ahorroData.movimientos || [];
+        ahorroData.movimientos.push({
+          id: Date.now(), fecha: new Date().toISOString().split('T')[0],
+          concepto: `Ajuste saldo ${cuenta.label}`,
+          bolsa: '', cuenta: cuenta.label, importe: diff, emoji: cuenta.emoji
+        });
+      }
+      saveAhorro(); renderAhorro(); renderDashboard();
+      toast(`✓ Saldo ${cuenta.label} actualizado`);
+    }
+  );
 }
 
 // ── Edit bolsa saldo inline ───────────────────────────────────
 function editAhorroBolsa(id) {
   const bolsa = ahorroData.bolsas.find(b=>b.id===id);
   if (!bolsa) return;
-  const val = parseFloat(prompt(`Saldo de bolsa "${bolsa.label}" (€):`, bolsa.saldo));
-  if (isNaN(val)) return;
-  const diff = val - bolsa.saldo;
-  bolsa.saldo = val;
-  if (diff !== 0) {
-    ahorroData.movimientos = ahorroData.movimientos || [];
-    ahorroData.movimientos.push({
-      id: Date.now(), fecha: new Date().toISOString().split('T')[0],
-      concepto: `Ajuste bolsa ${bolsa.label}`,
-      bolsa: bolsa.label, cuenta: '',
-      importe: diff, emoji: bolsa.emoji
-    });
-  }
-  saveAhorro();
-  renderAhorro();
-  toast(`✓ Bolsa ${bolsa.label} actualizada`);
+  openAhorroEditModal(
+    `${bolsa.emoji} ${bolsa.label}`, bolsa.saldo,
+    (val) => {
+      const diff = val - bolsa.saldo;
+      bolsa.saldo = val;
+      if (diff !== 0) {
+        ahorroData.movimientos = ahorroData.movimientos || [];
+        ahorroData.movimientos.push({
+          id: Date.now(), fecha: new Date().toISOString().split('T')[0],
+          concepto: `Ajuste bolsa ${bolsa.label}`,
+          bolsa: bolsa.label, cuenta: '', importe: diff, emoji: bolsa.emoji
+        });
+      }
+      saveAhorro(); renderAhorro();
+      toast(`✓ Bolsa ${bolsa.label} actualizada`);
+    }
+  );
 }
 
 // ── Add movement modal ────────────────────────────────────────
