@@ -696,6 +696,16 @@ svg.ring { transform: rotate(-90deg); }
           <button class="adjust-btn" onclick="adjustEfectivo()">Ajustar</button>
         </div>
       </div>
+      <!-- Selector de mes -->
+      <div class="month-selector" style="margin-bottom:12px">
+        <div class="month-nav">
+          <button onclick="prevMonthMov()">‹</button>
+          <div class="month-label" id="mov-month-label">Abril</div>
+          <button onclick="nextMonthMov()">›</button>
+        </div>
+        <div style="font-size:12px;color:var(--text3)" id="mov-count"></div>
+      </div>
+
       <!-- Importar corriente (colapsable) -->
       <div style="margin-bottom:12px">
         <button class="import-collapse-btn" id="btn-corriente" onclick="toggleImportSection('corriente')">
@@ -1446,12 +1456,20 @@ function renderDashboard() {
 
 // ─── MOVIMIENTOS ─────────────────────────────────────────────
 function renderMovimientos() {
-  const mData = data.filter(d => d.mes === currentMonth);
+  // Update month label
+  const movLbl = document.getElementById('mov-month-label');
+  if (movLbl) movLbl.textContent = movMonth;
+
+  const mData = data.filter(d => d.mes === movMonth);
   let filtered = currentFilter === 'all' ? mData :
     currentFilter === 'gasto' ? mData.filter(d=>d.tipo==='gasto') :
     currentFilter === 'ingreso' ? mData.filter(d=>d.tipo==='ingreso') :
     mData.filter(d=>d.cuenta===currentFilter);
   filtered = [...filtered].reverse();
+
+  // Update count
+  const movCnt = document.getElementById('mov-count');
+  if (movCnt) movCnt.textContent = mData.length + ' movimiento' + (mData.length !== 1 ? 's' : '');
 
   const list = document.getElementById('mov-list');
   list.innerHTML = '';
@@ -2119,7 +2137,7 @@ function showPage(name) {
   const labelEl = document.getElementById('nav-current-label');
   if (labelEl) labelEl.textContent = labels[name] || name;
   document.getElementById('main').scrollTop = 0;
-  if (name === 'movimientos') { renderMovimientos(); updateEfectivoDisplay(); }
+  if (name === 'movimientos') { movMonth = movMonth || currentMonth; renderMovimientos(); updateEfectivoDisplay(); }
   if (name === 'importar') updateEfectivoDisplay();
   if (name === 'presupuesto') { renderPresupuesto(); }
   if (name === 'ahorro') { renderAhorro(); }
@@ -2266,6 +2284,7 @@ function deleteMovimiento() {
 
 // ─── PRESUPUESTO ─────────────────────────────────────────────
 let budMonth = 'Abril';
+let movMonth = currentMonth;
 
 function renderPresupuesto() {
   const mes = budMonth;
@@ -2466,6 +2485,15 @@ function updateBudSummary(mes) {
       <div class="bud-summary-label">Margen</div>
       <div class="bud-summary-val" style="color:${margen>=0?'var(--accent)':'var(--red)'}">${margen>0?'+':margen<0?'-':''}${fmt(Math.abs(margen))}</div>
     </div>`;
+}
+
+function prevMonthMov() {
+  const idx = MONTHS.indexOf(movMonth);
+  if (idx > 0) { movMonth = MONTHS[idx-1]; renderMovimientos(); }
+}
+function nextMonthMov() {
+  const idx = MONTHS.indexOf(movMonth);
+  if (idx < MONTHS.length-1) { movMonth = MONTHS[idx+1]; renderMovimientos(); }
 }
 
 function prevMonthBud() {
