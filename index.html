@@ -1271,9 +1271,6 @@ function renderDashboard() {
   const pct = ingresos > 0 ? Math.min(gastos/ingresos, 1) : 0;
   const circ = 201;
   const offset = circ - (pct * circ);
-  const ring = document.getElementById('ring-circle');
-  ring.style.strokeDashoffset = offset;
-  ring.style.stroke = pct > 0.9 ? '#ff4757' : pct > 0.7 ? '#ff9f43' : '#00d4aa';
 
   const balEl = document.getElementById('balance-amount');
   balEl.textContent = (balance >= 0 ? '+' : '') + fmt(balance);
