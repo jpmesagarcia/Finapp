@@ -486,6 +486,79 @@ svg.ring { transform: rotate(-90deg); }
 }
 .import-collapse-content.open { display: block; }
 
+/* Dashboard frames */
+.dash-frame {
+  background: white; border: 1px solid var(--border);
+  border-radius: 20px; padding: 18px;
+  box-shadow: 0 2px 16px rgba(15,61,59,0.07);
+}
+.dash-frame-ahorro { background: linear-gradient(135deg, #f7fdf9 0%, #eef8f2 100%); border-color: #c8e8d4; }
+.dash-frame-label {
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 11px;
+  color: var(--text3); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 14px;
+}
+.dash-seg-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.dash-seg-col {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 12px;
+  padding: 12px; overflow-y: auto; max-height: 260px;
+}
+.dash-seg-col::-webkit-scrollbar { width: 3px; }
+.dash-seg-col::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.dash-seg-col-title {
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 11px;
+  color: var(--text3); text-transform: uppercase; letter-spacing: .6px;
+  margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+}
+.dash-seg-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.dash-seg-row:last-child { border-bottom: none; }
+.dash-seg-name { font-size: 12px; flex: 1; }
+.dash-seg-amounts { text-align: right; flex-shrink: 0; }
+.dash-seg-real { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px; }
+.dash-seg-bud { font-size: 10px; color: var(--text3); }
+.dash-seg-bar { height: 3px; border-radius: 3px; margin-top: 3px; }
+
+@media (max-width: 699px) {
+  /* Dashboard mobile */
+  .dash-frame { padding: 14px; border-radius: 16px; }
+  .dash-seg-grid { grid-template-columns: 1fr; gap: 10px; }
+  .dash-seg-col { max-height: 220px; }
+  .balance-amount { font-size: 24px; }
+
+  /* KPIs 2x2 on mobile */
+  #page-dashboard .kpi-row,
+  #page-dashboard [style*="repeat(4"] { grid-template-columns: 1fr 1fr !important; }
+
+  /* Bolsas 1 col on small screens */
+  #page-dashboard [style*="repeat(3"] { grid-template-columns: 1fr 1fr !important; }
+
+  /* Presupuesto mobile */
+  #bud-layout { grid-template-columns: 1fr !important; }
+
+  /* Ahorro mobile */
+  #ahorro-layout { grid-template-columns: 1fr !important; }
+  .ahorro-cuentas-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* Page padding */
+  .page { padding: 14px 16px; }
+
+  /* Nav subtitle hide on mobile */
+  .nav-subtitle { display: none !important; }
+
+  /* Import collapse smaller */
+  .import-collapse-btn { font-size: 13px; padding: 10px 14px; }
+
+  /* Modal wider on mobile */
+  .modal { border-radius: 16px 16px 0 0; position: fixed; bottom: 0; left: 0; right: 0; max-width: 100%; margin: 0; }
+  .overlay { align-items: flex-end; }
+}
+
+@media (max-width: 400px) {
+  #page-dashboard [style*="repeat(4"] { grid-template-columns: 1fr 1fr !important; }
+  #page-dashboard [style*="repeat(3"] { grid-template-columns: 1fr !important; }
+  .balance-amount { font-size: 22px; }
+  .kpi-value { font-size: 13px !important; }
+}
+
 /* ── DESKTOP LAYOUT ── */
 @media (min-width: 900px) {
   #app { max-width: 1280px; margin: 0 auto; }
@@ -580,7 +653,7 @@ svg.ring { transform: rotate(-90deg); }
     <div class="page active" id="page-dashboard">
 
       <!-- Selector de mes -->
-      <div class="month-selector" style="margin-bottom:14px">
+      <div class="month-selector" style="margin-bottom:16px">
         <div class="month-nav">
           <button onclick="prevMonth()">‹</button>
           <div class="month-label" id="month-label">Abril</div>
@@ -589,72 +662,85 @@ svg.ring { transform: rotate(-90deg); }
         <div style="font-size:12px;color:var(--text3)" id="dash-count"></div>
       </div>
 
-      <div id="dash-layout">
+      <!-- ── FRAME 1: Mes actual ── -->
+      <div class="dash-frame" style="margin-bottom:16px">
+        <div class="dash-frame-label">📅 Mes actual</div>
 
-        <!-- ── COLUMNA IZQUIERDA ── -->
-        <div id="dash-left">
-
-          <!-- Balance -->
-          <div class="balance-card" style="padding:16px 20px">
-            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Balance del mes</div>
-            <div class="balance-amount" id="balance-amount">—</div>
-            <div style="display:flex;gap:20px;margin-top:8px">
-              <div style="font-size:12px;color:var(--text3)">Ingresos <span id="bal-ing" style="color:var(--accent);font-weight:600">—</span></div>
-              <div style="font-size:12px;color:var(--text3)">Gastos <span id="bal-gas" style="color:var(--red);font-weight:600">—</span></div>
-            </div>
+        <!-- Balance grande -->
+        <div class="balance-card" style="padding:16px 20px;margin-bottom:12px">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Balance del mes</div>
+          <div class="balance-amount" id="balance-amount">—</div>
+          <div style="display:flex;gap:20px;margin-top:8px">
+            <div style="font-size:12px;color:var(--text3)">Ingresos <span id="bal-ing" style="color:var(--accent);font-weight:600">—</span></div>
+            <div style="font-size:12px;color:var(--text3)">Gastos <span id="bal-gas" style="color:var(--red);font-weight:600">—</span></div>
           </div>
+        </div>
 
-          <!-- KPIs 2x2 -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div class="kpi-card" style="padding:12px 14px">
-              <div class="kpi-icon" style="font-size:16px">🏦</div>
-              <div class="kpi-label">Banco (mes)</div>
-              <div class="kpi-value" id="kpi-banco" style="font-size:15px">—</div>
-            </div>
-            <div class="kpi-card" style="padding:12px 14px">
-              <div class="kpi-icon" style="font-size:16px">💵</div>
-              <div class="kpi-label">Efectivo</div>
-              <div class="kpi-value" id="kpi-efectivo-dash" style="font-size:15px">—</div>
-            </div>
-            <div class="kpi-card" style="padding:12px 14px">
-              <div class="kpi-icon" style="font-size:16px">🔮</div>
-              <div class="kpi-label">Previsión cierre</div>
-              <div class="kpi-value" id="kpi-proyeccion" style="font-size:15px">—</div>
-            </div>
-            <div class="kpi-card" style="padding:12px 14px">
-              <div class="kpi-icon" style="font-size:16px">📊</div>
-              <div class="kpi-label">% presupuesto</div>
-              <div class="kpi-value" id="kpi-pct-bud" style="font-size:15px">—</div>
-            </div>
+        <!-- KPIs 4 en fila -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+          <div class="kpi-card" style="padding:12px 14px">
+            <div class="kpi-icon" style="font-size:16px">🏦</div>
+            <div class="kpi-label">Banco (mes)</div>
+            <div class="kpi-value" id="kpi-banco" style="font-size:14px">—</div>
           </div>
-
-          <!-- Bolsas de ahorro -->
-          <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px">
-            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Ahorro</div>
-            <div id="dash-bolsas" style="display:flex;flex-direction:column;gap:6px"></div>
+          <div class="kpi-card" style="padding:12px 14px">
+            <div class="kpi-icon" style="font-size:16px">💵</div>
+            <div class="kpi-label">Efectivo</div>
+            <div class="kpi-value" id="kpi-efectivo-dash" style="font-size:14px">—</div>
           </div>
-
-        </div><!-- /dash-left -->
-
-        <!-- ── COLUMNA DERECHA ── -->
-        <div id="dash-right">
-
-          <!-- Seguimiento del mes -->
-          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px">Seguimiento del mes</div>
-          <div class="cat-grid" id="cat-grid"></div>
-
-          <!-- Evolución anual -->
-          <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-top:14px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">Evolución anual</div>
-              <div style="font-size:10px;color:var(--text3)">gasto total / mes</div>
-            </div>
-            <div id="spark-bars" style="display:flex;align-items:flex-end;gap:4px;height:60px"></div>
+          <div class="kpi-card" style="padding:12px 14px">
+            <div class="kpi-icon" style="font-size:16px">🐷</div>
+            <div class="kpi-label">Previsión cierre</div>
+            <div class="kpi-value" id="kpi-proyeccion" style="font-size:14px">—</div>
           </div>
+          <div class="kpi-card" style="padding:12px 14px">
+            <div class="kpi-icon" style="font-size:16px">📊</div>
+            <div class="kpi-label">% presupuesto</div>
+            <div class="kpi-value" id="kpi-pct-bud" style="font-size:14px">—</div>
+          </div>
+        </div>
 
-        </div><!-- /dash-right -->
+        <!-- 3 columnas seguimiento -->
+        <div class="dash-seg-grid">
+          <div class="dash-seg-col" id="seg-ingresos"></div>
+          <div class="dash-seg-col" id="seg-fijos"></div>
+          <div class="dash-seg-col" id="seg-variables"></div>
+        </div>
 
-      </div><!-- /dash-layout -->
+      </div><!-- /frame 1 -->
+
+      <!-- ── FRAME 2: Ahorro ── -->
+      <div class="dash-frame dash-frame-ahorro">
+        <div class="dash-frame-label">🐷 Ahorro</div>
+
+        <!-- Ahorro puro grande -->
+        <div class="balance-card" style="padding:16px 20px;margin-bottom:12px;background:linear-gradient(135deg,#f0faf5 0%,#e4f5ec 100%);border-color:#b8dfc8">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">💚 Ahorro puro</div>
+          <div class="balance-amount" id="dash-ahorro-puro" style="color:var(--accent)">—</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px">Ahorro real acumulado</div>
+        </div>
+
+        <!-- 3 bolsas pequeñas -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          <div class="kpi-card" style="padding:12px 14px" id="dash-bolsa-anual">
+            <div class="kpi-icon" style="font-size:18px">📅</div>
+            <div class="kpi-label">Fondo Anual</div>
+            <div class="kpi-value" style="font-size:14px;color:var(--text)" id="dash-bolsa-anual-val">—</div>
+          </div>
+          <div class="kpi-card" style="padding:12px 14px">
+            <div class="kpi-icon" style="font-size:18px">👩</div>
+            <div class="kpi-label">Lourdes</div>
+            <div class="kpi-value" style="font-size:14px;color:var(--text)" id="dash-bolsa-lourdes-val">—</div>
+          </div>
+          <div class="kpi-card" style="padding:12px 14px">
+            <div class="kpi-icon" style="font-size:18px">🏋️</div>
+            <div class="kpi-label">Pilates</div>
+            <div class="kpi-value" style="font-size:14px;color:var(--text)" id="dash-bolsa-pilates-val">—</div>
+          </div>
+        </div>
+
+      </div><!-- /frame 2 -->
+
     </div>
     <!-- MOVIMIENTOS -->
     <div class="page" id="page-movimientos">
@@ -765,17 +851,17 @@ svg.ring { transform: rotate(-90deg); }
 
       <!-- Two column layout -->
       <div id="ahorro-layout">
-        <!-- Left: saldos reales -->
+        <!-- Left: bolsas virtuales -->
         <div id="ahorro-col-left">
-          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">💳 Saldo real por cuenta</div>
-          <div id="ahorro-cuentas" style="display:flex;flex-direction:column;gap:8px"></div>
-          <div id="ahorro-total-cuentas" style="margin-top:10px"></div>
-        </div>
-        <!-- Right: bolsas virtuales -->
-        <div id="ahorro-col-right">
           <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">🪣 Distribución por bolsa</div>
           <div id="ahorro-bolsas" style="display:flex;flex-direction:column;gap:8px"></div>
           <div id="ahorro-total-bolsas" style="margin-top:10px"></div>
+        </div>
+        <!-- Right: saldos reales -->
+        <div id="ahorro-col-right">
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">💳 Saldo real por cuenta</div>
+          <div id="ahorro-cuentas" style="display:flex;flex-direction:column;gap:8px"></div>
+          <div id="ahorro-total-cuentas" style="margin-top:10px"></div>
         </div>
       </div>
 
@@ -1282,24 +1368,16 @@ function renderDashboard() {
   }
 
   // ── Bolsas de ahorro en dashboard ────────────────────────────
-  const dashBolsas = document.getElementById('dash-bolsas');
-  if (dashBolsas) {
-    dashBolsas.innerHTML = '';
-    (ahorroData.bolsas||[]).forEach(bolsa => {
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)';
-      row.innerHTML = `
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:16px">${bolsa.emoji}</span>
-          <span style="font-size:13px;font-weight:500">${bolsa.label}</span>
-        </div>
-        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:${bolsa.saldo>=0?'var(--text)':'var(--red)'}">${fmt(bolsa.saldo)}</span>`;
-      dashBolsas.appendChild(row);
-    });
-    // Remove last border
-    const rows = dashBolsas.querySelectorAll('div');
-    if (rows.length) rows[rows.length-1].style.borderBottom = 'none';
-  }
+  const ahorroMap = {};
+  (ahorroData.bolsas||[]).forEach(b => ahorroMap[b.id] = b.saldo);
+  const apEl = document.getElementById('dash-ahorro-puro');
+  if (apEl) { apEl.textContent = fmt(ahorroMap['ahorro_puro']||0); }
+  const anualEl = document.getElementById('dash-bolsa-anual-val');
+  if (anualEl) anualEl.textContent = fmt(ahorroMap['anual']||0);
+  const lourdesEl = document.getElementById('dash-bolsa-lourdes-val');
+  if (lourdesEl) lourdesEl.textContent = fmt(ahorroMap['lourdes']||0);
+  const pilatesEl = document.getElementById('dash-bolsa-pilates-val');
+  if (pilatesEl) pilatesEl.textContent = fmt(ahorroMap['pilates']||0);
 
   // ── Previsión cierre ─────────────────────────────────────────
   // Balance actual + lo que queda por gastar de cada partida del presupuesto
@@ -1345,6 +1423,7 @@ function renderDashboard() {
 
   // Spark bars
   const spark = document.getElementById('spark-bars');
+  if (!spark) return;
   spark.innerHTML = '';
   const monthTotals = MONTHS.map(m => ({
     m, total: data.filter(d=>d.mes===m && d.tipo==='gasto').reduce((s,d)=>s+Math.abs(d.importe),0)
@@ -1361,98 +1440,77 @@ function renderDashboard() {
     spark.appendChild(wrap);
   });
 
-  // ── Income & spend tracking ─────────────────────────────────
-  const catGrid = document.getElementById('cat-grid');
-  catGrid.innerHTML = '';
+  // ── Category rows in 3 columns ──────────────────────────────
+  const segIngresos  = document.getElementById('seg-ingresos');
+  const segFijos     = document.getElementById('seg-fijos');
+  const segVariables = document.getElementById('seg-variables');
+  const catGrid      = document.getElementById('cat-grid');
+  if (catGrid) catGrid.innerHTML = '';
+  if (!segIngresos || !segFijos || !segVariables) return;
+  segIngresos.innerHTML = segFijos.innerHTML = segVariables.innerHTML = '';
 
-  const incomeLines = getIncomeLines(currentMonth);
-  const fijosLines  = getFijosLines(currentMonth);
-  const catBud      = getBudget(currentMonth);
-
-  const catReal = {};
-  CATS.forEach(cat => {
-    catReal[cat] = mData.filter(d=>d.categoria===cat && d.tipo==='gasto').reduce((s,d)=>s+Math.abs(d.importe),0);
-  });
-  const incomeReal = {};
-  INCOME_CATS.forEach(cat => {
-    incomeReal[cat] = mData.filter(d=>d.categoria===cat && d.tipo==='ingreso').reduce((s,d)=>s+d.importe,0);
-  });
-
-  if (mData.length === 0) {
-    catGrid.innerHTML = '<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px">Sin movimientos este mes — importa el banco o añade un movimiento</div>';
-    return;
-  }
-
-  function dashRow(emoji, label, real, bud, isIncome) {
-    const over  = !isIncome && bud > 0 && real > bud;
-    const warn  = !isIncome && bud > 0 && real/bud > 0.8 && !over;
-    const pct   = bud > 0 ? Math.min(real/bud, 1) : 0;
-    const barCol = isIncome ? 'var(--accent)' : over ? 'var(--red)' : warn ? 'var(--orange)' : (CAT_COLORS[label]||'var(--accent2)');
-    const amtCol = isIncome
-      ? (real > 0 ? 'var(--accent)' : 'var(--text3)')
-      : (over ? 'var(--red)' : real > 0 ? 'var(--text)' : 'var(--text3)');
-    const tag = over ? `<span style="font-size:10px;background:rgba(255,71,87,0.15);color:var(--red);padding:1px 5px;border-radius:5px;margin-left:4px">+${fmt(real-bud)}</span>`
-              : warn ? `<span style="font-size:10px;background:rgba(255,159,67,0.15);color:var(--orange);padding:1px 5px;border-radius:5px;margin-left:4px">⚠️</span>`
-              : '';
-    const row = document.createElement('div');
-    row.className = 'cat-row';
-    row.innerHTML = `
-      <div class="cat-top">
-        <div class="cat-name"><span class="cat-emoji">${emoji}</span>${label}${tag}</div>
-        <div class="cat-amounts">
-          <div class="cat-real" style="color:${amtCol}">${real>0?fmt(real):'—'}</div>
-          ${bud>0?`<div class="cat-bud">/ ${fmt(bud)}</div>`:''}
-        </div>
-      </div>
-      ${bud>0?`<div class="progress-bar"><div class="progress-fill" style="width:${pct*100}%;background:${barCol}"></div></div>`:''}`;
-    return row;
-  }
-
-  function sectionHeader(icon, label, real, bud, isIncome) {
-    const over = !isIncome && bud > 0 && real > bud;
-    const col  = isIncome ? (real>=bud*0.9?'var(--accent)':'var(--text3)') : (over?'var(--red)':'var(--text3)');
+  function segHeader(el, icon, title, real, bud) {
+    if (!el) return;
     const d = document.createElement('div');
-    d.style.cssText = 'font-family:"Syne",sans-serif;font-weight:700;font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;margin-top:14px;display:flex;justify-content:space-between;align-items:center';
-    d.innerHTML = `<span>${icon} ${label}</span><span style="color:${col};font-weight:600">${fmt(real)} / ${fmt(bud)}</span>`;
-    return d;
+    d.className = 'dash-seg-col-title';
+    const color = real > bud ? 'var(--red)' : real > bud*0.8 ? 'var(--orange)' : 'var(--accent)';
+    d.innerHTML = `<span>${icon} ${title}</span><span style="color:${color};font-size:10px">${fmt(real)} / ${fmt(bud)}</span>`;
+    el.appendChild(d);
+  }
+  function segRow(el, emoji, name, real, bud) {
+    if (!el) return;
+    const pct = bud > 0 ? Math.min(real/bud*100,100) : real > 0 ? 100 : 0;
+    const color = real > bud && bud > 0 ? 'var(--red)' : real > bud*0.8 && bud > 0 ? 'var(--orange)' : real > 0 ? 'var(--accent)' : 'var(--text3)';
+    const row = document.createElement('div');
+    row.className = 'dash-seg-row';
+    row.innerHTML = `
+      <span style="font-size:14px;width:20px;text-align:center;flex-shrink:0">${emoji}</span>
+      <div style="flex:1;min-width:0">
+        <div class="dash-seg-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+        <div class="dash-seg-bar" style="width:${pct}%;background:${color};max-width:100%"></div>
+      </div>
+      <div class="dash-seg-amounts">
+        <div class="dash-seg-real" style="color:${real>0?color:'var(--text3)'}">${real>0?fmt(real):'—'}</div>
+        <div class="dash-seg-bud">${bud>0?'/ '+fmt(bud):''}</div>
+      </div>`;
+    el.appendChild(row);
   }
 
-  // ── INGRESOS ─────────────────────────────────────────────
-  const totalIngBud  = incomeLines.reduce((s,l)=>s+l.importe,0);
-  const totalIngReal = mData.filter(d=>d.tipo==='ingreso').reduce((s,d)=>s+d.importe,0);
-  catGrid.appendChild(sectionHeader('💰','Ingresos', totalIngReal, totalIngBud, true));
-  incomeLines.forEach(line => {
-    const r = incomeReal[line.label] || 0;
-    catGrid.appendChild(dashRow(line.emoji, line.label, r, line.importe, true));
+  // Ingresos
+  const incLinesD = getIncomeLines(currentMonth);
+  const totIngReal = mData.filter(d=>d.tipo==='ingreso').reduce((s,d)=>s+d.importe,0);
+  const totIngBud  = incLinesD.reduce((s,l)=>s+l.importe,0);
+  segHeader(segIngresos,'💰','Ingresos',totIngReal,totIngBud);
+  incLinesD.forEach(line => {
+    const real = mData.filter(d=>d.tipo==='ingreso'&&(d.categoria===line.label||d.categoria===line.id)).reduce((s,d)=>s+d.importe,0);
+    segRow(segIngresos,line.emoji||'💰',line.label,real,line.importe);
   });
 
-  // ── GASTOS FIJOS ─────────────────────────────────────────
-  const FIJOS_CATS = ['Hipoteca+Coche','Colegio','Seguros','Maritza'];
-  const totalFijBud  = fijosLines.reduce((s,l)=>s+l.importe,0);
-  const totalFijReal = FIJOS_CATS.reduce((s,cat)=>s+(catReal[cat]||0),0) + (catReal['Fijos']||0);
-  catGrid.appendChild(sectionHeader('📋','Fijos', totalFijReal, totalFijBud, false));
-  fijosLines.forEach(line => {
-    const catMap = {hipoteca:'Hipoteca+Coche',colegio:'Colegio',maritza:'Maritza',seguros:'Seguros'};
-    const r = catMap[line.id] ? (catReal[catMap[line.id]]||0) : 0;
-    catGrid.appendChild(dashRow(line.emoji, line.label, r, line.importe, false));
+  // Fijos
+  const FMAP = {hipoteca:'Hipoteca+Coche',colegio:'Colegio',maritza:'Maritza',seguros:'Seguros',comunidad:'Comunidad',telefono:'Teléfono',suscripc:'Suscripciones'};
+  const FCATS = Object.values(FMAP);
+  const fijLinesD = getFijosLines(currentMonth);
+  const totFijReal = mData.filter(d=>d.tipo==='gasto'&&FCATS.includes(d.categoria)).reduce((s,d)=>s+Math.abs(d.importe),0);
+  const totFijBud  = fijLinesD.reduce((s,l)=>s+l.importe,0);
+  segHeader(segFijos,'📋','Fijos',totFijReal,totFijBud);
+  fijLinesD.forEach(line => {
+    const catN = FMAP[line.id]||line.label;
+    const real = mData.filter(d=>d.tipo==='gasto'&&d.categoria===catN).reduce((s,d)=>s+Math.abs(d.importe),0);
+    segRow(segFijos,line.emoji||'📋',line.label,real,line.importe);
   });
 
-  // ── GASTOS VARIABLES ─────────────────────────────────────
-  const varCats = CATS.filter(cat => !FIJOS_CATS.includes(cat) && cat !== 'Fijos');
-  const totalVarBud  = varCats.reduce((s,cat)=>s+(catBud[cat]||0),0);
-  const totalVarReal = varCats.reduce((s,cat)=>s+(catReal[cat]||0),0);
-  catGrid.appendChild(sectionHeader('📊','Variables', totalVarReal, totalVarBud, false));
-  [...varCats]
-    .filter(cat => (catReal[cat]||0)>0 || (catBud[cat]||0)>0)
-    .sort((a,b)=>{
-      const aO=catReal[a]>(catBud[a]||0), bO=catReal[b]>(catBud[b]||0);
-      if(aO&&!bO) return -1; if(!aO&&bO) return 1;
-      return (catReal[b]||0)-(catReal[a]||0);
-    })
-    .forEach(cat => catGrid.appendChild(dashRow(CAT_EMOJI[cat]||'📦', cat, catReal[cat]||0, catBud[cat]||0, false)));
+  // Variables
+  const varCatsD = CATS.filter(cat=>!FCATS.includes(cat)&&cat!=='Fijos');
+  const catBudD  = getBudget(currentMonth);
+  const totVarReal = mData.filter(d=>d.tipo==='gasto'&&varCatsD.includes(d.categoria)).reduce((s,d)=>s+Math.abs(d.importe),0);
+  const totVarBud  = varCatsD.reduce((s,cat)=>s+(catBudD[cat]||0),0);
+  segHeader(segVariables,'📊','Variables',totVarReal,totVarBud);
+  varCatsD.forEach(cat => {
+    const real = mData.filter(d=>d.tipo==='gasto'&&d.categoria===cat).reduce((s,d)=>s+Math.abs(d.importe),0);
+    segRow(segVariables,CAT_EMOJI[cat]||'📦',cat,real,catBudD[cat]||0);
+  });
 }
 
-// ─── MOVIMIENTOS ─────────────────────────────────────────────
 function renderMovimientos() {
   // Update month label
   const movLbl = document.getElementById('mov-month-label');
