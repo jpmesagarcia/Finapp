@@ -3217,18 +3217,111 @@ function renderMovsBolsas(el, movs) {
       </div>
       <div id="${grpId}" style="display:${isOpen?'block':'none'}">
         ${g.items.map(m=>`
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--border)">
-            <div>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid var(--border)" onclick="editAhorroMov(${m.id})" style="cursor:pointer">
+            <div style="flex:1">
               <div style="font-size:13px;font-weight:500">${m.concepto}</div>
               <div style="font-size:10px;color:var(--text3);margin-top:2px">${m.fecha||''} · ${m.cuenta||''}</div>
             </div>
             <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:${m.importe>=0?'var(--accent)':'var(--red)'}">
               ${m.importe>=0?'+':'-'}${fmt(Math.abs(m.importe))}
             </div>
+            <span style="font-size:14px;color:var(--text3);cursor:pointer" onclick="event.stopPropagation();editAhorroMov(${m.id})">✏️</span>
           </div>`).join('')}
       </div>`;
     el.appendChild(div);
   });
+}
+
+function editAhorroMov(movId) {
+  const idx = ahorroData.movimientos.findIndex(m => m.id === movId);
+  if (idx < 0) return;
+  const m = ahorroData.movimientos[idx];
+  const bolsaOpts = ahorroData.bolsas.map(b=>`<option value="${b.id}"${b.label===m.bolsa?' selected':''}>${b.emoji} ${b.label}</option>`).join('');
+  const cuentaOpts = ahorroData.cuentas.map(ct=>`<option value="${ct.id}"${ct.label===m.cuenta?' selected':''}>${ct.emoji} ${ct.label}</option>`).join('');
+
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.querySelector('#modal .modal-header h2').textContent = 'Editar movimiento';
+  const body = document.querySelector('#modal .modal-body');
+  body.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'padding:20px;display:flex;flex-direction:column;gap:14px';
+  wrap.innerHTML = `
+    <div><label class="form-label">Concepto</label>
+      <input class="form-input" id="em-concepto" value="${m.concepto||''}"></div>
+    <div><label class="form-label">Importe (+ entrada, - salida)</label>
+      <input class="form-input amount-input" id="em-importe" type="number" step="0.01" value="${m.importe||0}"></div>
+    <div><label class="form-label">Bolsa</label>
+      <select class="form-input" id="em-bolsa"><option value="">— Sin bolsa —</option>${bolsaOpts}</select></div>
+    <div><label class="form-label">Cuenta física</label>
+      <select class="form-input" id="em-cuenta"><option value="">— Sin cuenta —</option>${cuentaOpts}</select></div>
+    <div><label class="form-label">Fecha</label>
+      <input class="form-input" id="em-fecha" type="date" value="${m.fecha||''}"></div>`;
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'submit-btn';
+  saveBtn.textContent = 'Guardar cambios';
+  saveBtn.onclick = () => saveAhorroMovEdit(idx, m);
+  const delBtn = document.createElement('button');
+  delBtn.textContent = '🗑️ Eliminar movimiento';
+  delBtn.style.cssText = 'padding:12px;border-radius:var(--radius-sm);border:1px solid var(--red);background:transparent;color:var(--red);font-size:13px;font-weight:600;cursor:pointer;margin-top:4px';
+  delBtn.onclick = () => deleteAhorroMov(idx, m);
+  wrap.appendChild(saveBtn);
+  wrap.appendChild(delBtn);
+  body.appendChild(wrap);
+}
+
+function saveAhorroMovEdit(idx, oldMov) {
+  const concepto = document.getElementById('em-concepto').value.trim();
+  const importe  = parseFloat(document.getElementById('em-importe').value) || 0;
+  const bolsaId  = document.getElementById('em-bolsa').value;
+  const cuentaId = document.getElementById('em-cuenta').value;
+  const fecha    = document.getElementById('em-fecha').value;
+  if (!concepto) { toast('Introduce un concepto'); return; }
+
+  const oldImporte = oldMov.importe;
+  const diff = importe - oldImporte;
+
+  // Reverse old cuenta/bolsa effect
+  const oldCuenta = ahorroData.cuentas.find(ct=>ct.label===oldMov.cuenta||ct.id===oldMov.cuenta);
+  const oldBolsa  = ahorroData.bolsas.find(b=>b.label===oldMov.bolsa||b.id===oldMov.bolsa);
+  if (oldCuenta) oldCuenta.saldo -= oldImporte;
+  if (oldBolsa)  oldBolsa.saldo  -= oldImporte;
+
+  // Apply new values
+  const newCuenta = ahorroData.cuentas.find(ct=>ct.id===cuentaId);
+  const newBolsa  = ahorroData.bolsas.find(b=>b.id===bolsaId);
+  if (newCuenta) newCuenta.saldo += importe;
+  if (newBolsa)  newBolsa.saldo  += importe;
+
+  ahorroData.movimientos[idx] = {
+    ...oldMov, concepto, importe, fecha,
+    bolsa: newBolsa?.label || oldMov.bolsa,
+    cuenta: newCuenta?.label || oldMov.cuenta,
+    emoji: newBolsa?.emoji || oldMov.emoji
+  };
+
+  saveAhorro();
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  renderAhorro();
+  renderDashboard();
+  toast('✓ Movimiento actualizado');
+}
+
+function deleteAhorroMov(idx, m) {
+  if (!confirm('¿Eliminar este movimiento?\n\nSe revertirá su efecto en saldos.')) return;
+  // Reverse effect on cuenta and bolsa
+  const cuenta = ahorroData.cuentas.find(ct=>ct.label===m.cuenta||ct.id===m.cuenta);
+  const bolsa  = ahorroData.bolsas.find(b=>b.label===m.bolsa||b.id===m.bolsa);
+  if (cuenta) cuenta.saldo -= m.importe;
+  if (bolsa)  bolsa.saldo  -= m.importe;
+  ahorroData.movimientos.splice(idx, 1);
+  saveAhorro();
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  renderAhorro();
+  renderDashboard();
+  toast('✓ Movimiento eliminado');
 }
 
 function toggleAhorroBolsaGroup(id) {
@@ -3281,6 +3374,7 @@ function renderMovsCuentas(el, movs) {
             <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;flex-shrink:0;margin-left:8px;color:${m.importe>=0?'var(--accent)':'var(--red)'}">
               ${m.importe>=0?'+':'-'}${fmt(Math.abs(m.importe))}
             </div>
+            <span style="font-size:12px;color:var(--text3);cursor:pointer;flex-shrink:0" onclick="editAhorroMov(${m.id})">✏️</span>
           </div>`).join('')}`;
     grid.appendChild(col);
   });
