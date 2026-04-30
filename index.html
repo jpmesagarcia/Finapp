@@ -1350,7 +1350,7 @@ function renderDashboard() {
   const offset = circ - (pct * circ);
 
   const balEl = document.getElementById('balance-amount');
-  balEl.textContent = (balance >= 0 ? '+' : '') + fmt(balance);
+  balEl.textContent = (balance >= 0 ? '+' : '-') + fmt(Math.abs(balance));
   balEl.className = 'balance-amount ' + (balance >= 0 ? 'pos' : 'neg');
   document.getElementById('bal-ing').textContent = fmt(ingresos);
   document.getElementById('bal-gas').textContent = fmt(gastos);
@@ -1359,7 +1359,7 @@ function renderDashboard() {
   // ── Bank movements ──────────────────────────────────────────
   const bancoMovs = mData.filter(d=>d.cuenta==='banco');
   const bancoNet  = bancoMovs.reduce((s,d)=>s+d.importe,0);
-  document.getElementById('kpi-banco').textContent = fmt(bancoNet);
+  document.getElementById('kpi-banco').textContent = (bancoNet>=0?'+':'-') + fmt(Math.abs(bancoNet));
 
   // ── Efectivo KPI ─────────────────────────────────────────────
   const efEl = document.getElementById('kpi-efectivo-dash');
@@ -1435,10 +1435,24 @@ function renderDashboard() {
     pendientePorGastar += resta;
   });
 
-  const previsionCierre = balanceActual - pendientePorGastar;
+  // Ingresos pendientes de llegar (presupuestado - ya recibido)
+  const ingCatMapPrev = {nomina:'Nómina',variable:'Variable Lucía',atocha:'Atocha',cristina:'Pisos Cristina',ninos:'Ayuda niños',saldo_ant:'Saldo mes anterior'};
+  const incLinesPrev = getIncomeLines(currentMonth);
+  let pendienteDeIngreso = 0;
+  incLinesPrev.forEach(line => {
+    const catN = ingCatMapPrev[line.id] || line.label;
+    const recibido = mData.filter(d=>d.tipo==='ingreso'&&(d.categoria===catN||d.categoria===line.label)).reduce((s,d)=>s+d.importe,0);
+    const resta = Math.max(0, line.importe - recibido);
+    pendienteDeIngreso += resta;
+  });
+
+  // Previsión = balance actual + ingresos pendientes - gastos pendientes
+  // Con 0 movimientos → ingr.pendiente = total presup ingresos, gastos pendiente = total presup gastos
+  // → previsión = margen del presupuesto ✓
+  const previsionCierre = balanceActual + pendienteDeIngreso - pendientePorGastar;
   const projEl = document.getElementById('kpi-proyeccion');
   if (projEl) {
-    projEl.textContent = (previsionCierre >= 0 ? '+' : '') + fmt(previsionCierre);
+    projEl.textContent = (previsionCierre >= 0 ? '+' : '-') + fmt(Math.abs(previsionCierre));
     projEl.style.color = previsionCierre >= 0 ? 'var(--accent)' : 'var(--red)';
   }
 
@@ -1481,7 +1495,8 @@ function renderDashboard() {
     const d = document.createElement('div');
     d.className = 'dash-seg-col-title';
     const color = real > bud ? 'var(--red)' : real > bud*0.8 ? 'var(--orange)' : 'var(--accent)';
-    d.innerHTML = `<span>${icon} ${title}</span><span style="color:${color};font-size:10px">${fmt(real)} / ${fmt(bud)}</span>`;
+    const rSign = real < 0 ? '-' : '';
+    d.innerHTML = `<span>${icon} ${title}</span><span style="color:${color};font-size:10px">${rSign}${fmt(Math.abs(real))} / ${fmt(bud)}</span>`;
     el.appendChild(d);
   }
   function segRow(el, emoji, name, real, bud, tipo) {
@@ -1502,7 +1517,7 @@ function renderDashboard() {
         <div class="dash-seg-bar" style="width:${pct}%;background:${color};max-width:100%"></div>
       </div>
       <div class="dash-seg-amounts">
-        <div class="dash-seg-real" style="color:${real>0?color:'var(--text3)'}">${real>0?fmt(real):'—'}</div>
+        <div class="dash-seg-real" style="color:${real>0?color:'var(--text3)'}">${real>0?(fmt(real)):real<0?('-'+fmt(Math.abs(real))):'—'}</div>
         <div class="dash-seg-bud">${bud>0?'/ '+fmt(bud):''}</div>
       </div>`;
     el.appendChild(row);
