@@ -1309,6 +1309,36 @@ function nextMonth() {
 }
 
 // ─── RENDER DASHBOARD ────────────────────────────────────────
+let dashVigilancia = false;
+
+function toggleVigilancia() {
+  dashVigilancia = !dashVigilancia;
+  const btn = document.getElementById('dash-vigilancia-btn');
+  if (btn) {
+    btn.textContent = dashVigilancia ? '⚠️ Pendientes' : '👁 Todos';
+    btn.style.background = dashVigilancia ? 'rgba(224,124,26,0.12)' : 'transparent';
+    btn.style.borderColor = dashVigilancia ? 'var(--orange)' : 'var(--border)';
+    btn.style.color = dashVigilancia ? 'var(--orange)' : 'var(--text2)';
+  }
+  renderDashboard();
+}
+
+function showInVigilancia(real, bud, tipo) {
+  if (!dashVigilancia) return true;
+  const today = new Date().getDate();
+  const isLateInMonth = today > 15;
+  if (tipo === 'ingreso') {
+    if (real === 0 && bud > 0) return true;
+    if (real > bud) return true;
+    if (real < bud && isLateInMonth) return true;
+    return false;
+  } else {
+    if (real > bud && bud > 0) return true;
+    if (real === 0 && bud > 0 && isLateInMonth) return true;
+    return false;
+  }
+}
+
 function renderDashboard() {
   const mData = data.filter(d => d.mes === currentMonth);
   const ingresos = mData.filter(d=>d.tipo==='ingreso').reduce((s,d)=>s+d.importe,0);
@@ -1423,22 +1453,23 @@ function renderDashboard() {
 
   // Spark bars
   const spark = document.getElementById('spark-bars');
-  if (!spark) return;
-  spark.innerHTML = '';
-  const monthTotals = MONTHS.map(m => ({
-    m, total: data.filter(d=>d.mes===m && d.tipo==='gasto').reduce((s,d)=>s+Math.abs(d.importe),0)
-  }));
-  const maxT = Math.max(...monthTotals.map(x=>x.total));
-  monthTotals.forEach(({m, total}) => {
-    const pct = maxT > 0 ? (total/maxT)*100 : 0;
-    const active = m === currentMonth;
-    const wrap = document.createElement('div');
-    wrap.className = 'spark-bar-wrap';
-    wrap.innerHTML = `
-      <div class="spark-bar" style="height:${Math.max(pct,2)}%;background:${active?'var(--accent)':'rgba(0,0,0,0.1)'};${active?'box-shadow:0 0 10px rgba(0,212,170,0.5)':''}" onclick="currentMonth='${m}';renderDashboard()" title="${m}: ${fmt(total)}"></div>
-      <div class="spark-label" style="color:${active?'var(--accent)':'var(--text3)'}">${MONTH_DATES[m]?.split(' ')[0]||m.slice(0,3)}</div>`;
-    spark.appendChild(wrap);
-  });
+  if (spark) {
+    spark.innerHTML = '';
+    const monthTotals = MONTHS.map(m => ({
+      m, total: data.filter(d=>d.mes===m && d.tipo==='gasto').reduce((s,d)=>s+Math.abs(d.importe),0)
+    }));
+    const maxT = Math.max(...monthTotals.map(x=>x.total));
+    monthTotals.forEach(({m, total}) => {
+      const pct = maxT > 0 ? (total/maxT)*100 : 0;
+      const active = m === currentMonth;
+      const wrap = document.createElement('div');
+      wrap.className = 'spark-bar-wrap';
+      wrap.innerHTML = `
+        <div class="spark-bar" style="height:${Math.max(pct,2)}%;background:${active?'var(--accent)':'rgba(0,0,0,0.1)'};${active?'box-shadow:0 0 10px rgba(0,212,170,0.5)':''}" onclick="currentMonth='${m}';renderDashboard()" title="${m}: ${fmt(total)}"></div>
+        <div class="spark-label" style="color:${active?'var(--accent)':'var(--text3)'}">${MONTH_DATES[m]?.split(' ')[0]||m.slice(0,3)}</div>`;
+      spark.appendChild(wrap);
+    });
+  }
 
   // ── Category rows in 3 columns ──────────────────────────────
   const segIngresos  = document.getElementById('seg-ingresos');
@@ -1457,16 +1488,21 @@ function renderDashboard() {
     d.innerHTML = `<span>${icon} ${title}</span><span style="color:${color};font-size:10px">${fmt(real)} / ${fmt(bud)}</span>`;
     el.appendChild(d);
   }
-  function segRow(el, emoji, name, real, bud) {
+  function segRow(el, emoji, name, real, bud, tipo) {
     if (!el) return;
+    if (!showInVigilancia(real, bud, tipo || 'gasto')) return;
     const pct = bud > 0 ? Math.min(real/bud*100,100) : real > 0 ? 100 : 0;
     const color = real > bud && bud > 0 ? 'var(--red)' : real > bud*0.8 && bud > 0 ? 'var(--orange)' : real > 0 ? 'var(--accent)' : 'var(--text3)';
+    const overBudget = real > bud && bud > 0;
     const row = document.createElement('div');
     row.className = 'dash-seg-row';
+    row.style.cssText = overBudget ? 'background:rgba(217,61,61,0.04);border-radius:8px;padding:0 4px;margin:0 -4px' : '';
     row.innerHTML = `
       <span style="font-size:14px;width:20px;text-align:center;flex-shrink:0">${emoji}</span>
       <div style="flex:1;min-width:0">
-        <div class="dash-seg-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+        <div class="dash-seg-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          ${name}${overBudget ? ' <span style="font-size:9px;background:rgba(217,61,61,0.15);color:var(--red);padding:1px 5px;border-radius:5px">+'+fmt(real-bud)+'</span>' : ''}
+        </div>
         <div class="dash-seg-bar" style="width:${pct}%;background:${color};max-width:100%"></div>
       </div>
       <div class="dash-seg-amounts">
@@ -1483,7 +1519,7 @@ function renderDashboard() {
   segHeader(segIngresos,'💰','Ingresos',totIngReal,totIngBud);
   incLinesD.forEach(line => {
     const real = mData.filter(d=>d.tipo==='ingreso'&&(d.categoria===line.label||d.categoria===line.id)).reduce((s,d)=>s+d.importe,0);
-    segRow(segIngresos,line.emoji||'💰',line.label,real,line.importe);
+    segRow(segIngresos,line.emoji||'💰',line.label,real,line.importe,'ingreso');
   });
 
   // Fijos
@@ -1496,7 +1532,7 @@ function renderDashboard() {
   fijLinesD.forEach(line => {
     const catN = FMAP[line.id]||line.label;
     const real = mData.filter(d=>d.tipo==='gasto'&&d.categoria===catN).reduce((s,d)=>s+Math.abs(d.importe),0);
-    segRow(segFijos,line.emoji||'📋',line.label,real,line.importe);
+    segRow(segFijos,line.emoji||'📋',line.label,real,line.importe,'gasto');
   });
 
   // Variables
@@ -1507,7 +1543,7 @@ function renderDashboard() {
   segHeader(segVariables,'📊','Variables',totVarReal,totVarBud);
   varCatsD.forEach(cat => {
     const real = mData.filter(d=>d.tipo==='gasto'&&d.categoria===cat).reduce((s,d)=>s+Math.abs(d.importe),0);
-    segRow(segVariables,CAT_EMOJI[cat]||'📦',cat,real,catBudD[cat]||0);
+    segRow(segVariables,CAT_EMOJI[cat]||'📦',cat,real,catBudD[cat]||0,'gasto');
   });
 }
 
