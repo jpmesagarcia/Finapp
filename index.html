@@ -2482,7 +2482,7 @@ function renderPresupuesto() {
     (target || list).appendChild(d);
   }
 
-  function editRow(emoji, label, value, onSave) {
+  function editRow(emoji, label, value, onSave, onDelete) {
     const row = document.createElement('div');
     row.className = 'bud-row ok';
     row.style.cssText = 'display:flex;align-items:center;gap:12px';
@@ -2508,12 +2508,25 @@ function renderPresupuesto() {
     row.appendChild(labelEl);
     row.appendChild(inp);
     row.appendChild(unitEl);
+    if (onDelete) {
+      const delBtn = document.createElement('button');
+      delBtn.innerHTML = '×';
+      delBtn.style.cssText = 'background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:0 2px;line-height:1';
+      delBtn.onclick = onDelete;
+      row.appendChild(delBtn);
+    }
     list.appendChild(row);
   }
 
   addHeader('💰', 'Ingresos esperados');
   incomeLines.forEach(line => {
-    editRow(line.emoji, line.label, line.importe, val => { saveIncomeLine(mes, line.id, val); updateBudSummary(mes); renderDashboard(); });
+    const isCustom = customIncomeLines.some(cl => cl.id === line.id);
+    editRow(line.emoji, line.label, line.importe, val => { saveIncomeLine(mes, line.id, val); updateBudSummary(mes); renderDashboard(); }, isCustom ? () => {
+      if (!confirm('¿Eliminar "' + line.label + '"?')) return;
+      customIncomeLines.splice(customIncomeLines.findIndex(cl=>cl.id===line.id), 1);
+      saveCustomIncomeLines();
+      renderPresupuesto();
+    } : null);
   });
 
   // Custom income lines
