@@ -664,7 +664,12 @@ svg.ring { transform: rotate(-90deg); }
 
       <!-- ── FRAME 1: Mes actual ── -->
       <div class="dash-frame" style="margin-bottom:16px">
-        <div class="dash-frame-label">📅 Mes actual</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="dash-frame-label" style="margin-bottom:0">📅 Mes actual</div>
+          <button id="dash-vigilancia-btn" onclick="toggleVigilancia()" style="padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer">
+            👁 Todos
+          </button>
+        </div>
 
         <!-- Balance grande -->
         <div class="balance-card" style="padding:16px 20px;margin-bottom:12px">
