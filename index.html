@@ -1330,18 +1330,9 @@ function toggleVigilancia() {
 
 function showInVigilancia(real, bud, tipo) {
   if (!dashVigilancia) return true;
-  const today = new Date().getDate();
-  const isLateInMonth = today > 15;
-  if (tipo === 'ingreso') {
-    if (real === 0 && bud > 0) return true;
-    if (real > bud) return true;
-    if (real < bud && isLateInMonth) return true;
-    return false;
-  } else {
-    if (real > bud && bud > 0) return true;
-    if (real === 0 && bud > 0 && isLateInMonth) return true;
-    return false;
-  }
+  if (bud === 0) return real > 0; // no budget but has movement → show
+  const diff = Math.abs(real - bud) / bud;
+  return diff > 0.10; // show if more than 10% away from budget
 }
 
 function renderDashboard() {
@@ -1522,10 +1513,29 @@ function renderDashboard() {
   const totIngReal = mData.filter(d=>d.tipo==='ingreso').reduce((s,d)=>s+d.importe,0);
   const totIngBud  = incLinesD.reduce((s,l)=>s+l.importe,0);
   segHeader(segIngresos,'💰','Ingresos',totIngReal,totIngBud);
+  // For ingresos, show total real vs each line budget
+  // Since movements don't map to income categories, show total on first line only
+  const ingMovs = mData.filter(d=>d.tipo==='ingreso');
+  let ingShown = 0;
   incLinesD.forEach(line => {
-    const real = mData.filter(d=>d.tipo==='ingreso'&&(d.categoria===line.label||d.categoria===line.id)).reduce((s,d)=>s+d.importe,0);
+    // Try to match by categoria first, otherwise use unassigned portion
+    // Map income line ids to their category names in INCOME_CATS
+    const ingCatMap = {
+      nomina: 'Nómina', variable: 'Variable Lucía', atocha: 'Atocha',
+      cristina: 'Pisos Cristina', ninos: 'Ayuda niños', saldo_ant: 'Saldo mes anterior'
+    };
+    const catName = ingCatMap[line.id] || line.label;
+    const byCategoria = ingMovs.filter(d=>
+      d.categoria===catName || d.categoria===line.label || d.categoria===line.id
+    ).reduce((s,d)=>s+d.importe,0);
+    const real = byCategoria;
+    ingShown += real;
     segRow(segIngresos,line.emoji||'💰',line.label,real,line.importe,'ingreso');
   });
+  // If there are unmatched income movements, show them as "Otros"
+  if (totIngReal > ingShown + 0.01) {
+    segRow(segIngresos,'💰','Otros ingresos',totIngReal - ingShown,0,'ingreso');
+  }
 
   // Fijos
   const FMAP = {hipoteca:'Hipoteca+Coche',colegio:'Colegio',maritza:'Maritza',seguros:'Seguros',comunidad:'Comunidad',telefono:'Teléfono',suscripc:'Suscripciones'};
