@@ -1738,7 +1738,7 @@ function handleFileAhorro(input) {
         if (!XLSX) { toast('Cargando librería Excel…'); return; }
         const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:false});
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true});
         importBuffer = [];
         if (selectedBank === 'caixabank_ahorro') parseCaixaBankAhorro(rows);
         else if (selectedBank === 'bankinter_ahorro') parseBankinterAhorro(rows);
@@ -1848,7 +1848,7 @@ function parseCSV(file) {
         if (!XLSX) { toast('Cargando librería Excel…'); return; }
         const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:false});
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true});
         importBuffer = [];
         if (selectedBank === 'caixabank_ahorro') {
           parseCaixaBankAhorro(rows);
