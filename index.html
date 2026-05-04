@@ -2547,40 +2547,6 @@ function renderPresupuesto() {
     } : null);
   });
 
-  // Custom income lines
-  customIncomeLines.forEach((line, idx) => {
-    const val = (budgets[mes]?.income?.[line.id]) ?? line.importe;
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:12px';
-    const inp = document.createElement('input');
-    inp.type = 'number'; inp.value = val || ''; inp.placeholder = '0'; inp.step = '1';
-    inp.style.cssText = 'width:88px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:"Syne",sans-serif;font-size:14px;font-weight:700;padding:7px 10px;text-align:right;outline:none;-webkit-appearance:none';
-    inp.addEventListener('focus', () => { inp.style.borderColor='var(--accent)'; inp.select(); });
-    inp.addEventListener('blur',  () => { inp.style.borderColor='var(--border)'; saveIncomeLine(mes, line.id, parseFloat(inp.value)||0); updateBudSummary(mes); renderDashboard(); });
-    inp.addEventListener('keydown', e => { if(e.key==='Enter') inp.blur(); });
-    const emojiEl = document.createElement('span');
-    emojiEl.style.cssText = 'font-size:18px;width:24px;text-align:center;flex-shrink:0';
-    emojiEl.textContent = line.emoji || '💰';
-    const labelEl = document.createElement('span');
-    labelEl.style.cssText = 'flex:1;font-size:14px;font-weight:500;color:var(--text)';
-    labelEl.textContent = line.label;
-    const delBtn = document.createElement('button');
-    delBtn.innerHTML = '×';
-    delBtn.style.cssText = 'background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:0 2px';
-    delBtn.title = 'Eliminar';
-    delBtn.onclick = () => {
-      if (!confirm(`¿Eliminar "${line.label}"?`)) return;
-      customIncomeLines.splice(idx, 1);
-      saveCustomIncomeLines();
-      renderPresupuesto();
-    };
-    const unitEl = document.createElement('span');
-    unitEl.style.cssText = 'font-size:12px;color:var(--text3);flex-shrink:0';
-    unitEl.textContent = '€/mes';
-    row.appendChild(emojiEl); row.appendChild(labelEl); row.appendChild(inp); row.appendChild(unitEl); row.appendChild(delBtn);
-    list.appendChild(row);
-  });
-
   // Add new income button
   const addIncomeBtnEl = document.createElement('button');
   addIncomeBtnEl.style.cssText = 'margin-top:10px;width:100%;padding:11px;border-radius:var(--radius-sm);border:1px dashed var(--border);background:transparent;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px';
