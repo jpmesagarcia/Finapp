@@ -1437,11 +1437,18 @@ function renderDashboard() {
     pendientePorGastar += resta;
   });
 
-  // Variables pendientes
+  // Variables pendientes (built-in)
   const varCatsPrev = CATS.filter(cat => !FIJOS_CATS_PREV.includes(cat) && cat !== 'Fijos');
   varCatsPrev.forEach(cat => {
     const bud = catBudPrev[cat] || 0;
     const gastado = mData.filter(d=>d.categoria===cat && d.tipo==='gasto').reduce((s,d)=>s+Math.abs(d.importe),0);
+    const resta = Math.max(0, bud - gastado);
+    pendientePorGastar += resta;
+  });
+  // Variables pendientes (categorías personalizadas)
+  customCats.forEach(cc => {
+    const bud = (budgets[currentMonth]?.cats?.[cc.label]) ?? cc.importe ?? 0;
+    const gastado = mData.filter(d=>d.categoria===cc.label && d.tipo==='gasto').reduce((s,d)=>s+Math.abs(d.importe),0);
     const resta = Math.max(0, bud - gastado);
     pendientePorGastar += resta;
   });
