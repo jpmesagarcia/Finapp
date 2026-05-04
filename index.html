@@ -2555,9 +2555,28 @@ function renderPresupuesto() {
   }
 
   addHeader('💰', 'Ingresos esperados');
+  // Auto-calculate saldo mes anterior
+  const mesIdx = MONTHS.indexOf(mes);
+  if (mesIdx > 0) {
+    const mesPrev = MONTHS[mesIdx - 1];
+    const prevMovs = data.filter(d => d.mes === mesPrev);
+    const prevBalance = prevMovs.reduce((s, d) => s + d.importe, 0);
+    // Only auto-fill if user hasn't manually set it
+    if (!budgets[mes]?.income?.['saldo_ant']) {
+      if (!budgets[mes]) budgets[mes] = {};
+      if (!budgets[mes].income) budgets[mes].income = {};
+      budgets[mes].income['saldo_ant'] = Math.round(prevBalance * 100) / 100;
+      saveBudgets();
+    }
+  }
+
   incomeLines.forEach(line => {
     const isCustom = customIncomeLines.some(cl => cl.id === line.id);
-    editRow(line.emoji, line.label, line.importe, val => { saveIncomeLine(mes, line.id, val); updateBudSummary(mes); renderDashboard(); }, isCustom ? () => {
+    editRow(line.emoji, line.label, line.importe, val => {
+      saveIncomeLine(mes, line.id, val);
+      updateBudSummary(mes);
+      renderDashboard();
+    }, isCustom ? () => {
       if (!confirm('¿Eliminar "' + line.label + '"?')) return;
       customIncomeLines.splice(customIncomeLines.findIndex(cl=>cl.id===line.id), 1);
       saveCustomIncomeLines();
