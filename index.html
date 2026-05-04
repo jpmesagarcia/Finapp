@@ -1374,7 +1374,12 @@ function renderDashboard() {
 
   // ── Efectivo KPI ─────────────────────────────────────────────
   const efEl = document.getElementById('kpi-efectivo-dash');
-  if (efEl) { efEl.textContent = fmt(efectivoBalance); }
+  if (efEl) {
+    // Sum efectivo movements for current month
+    const efMes = mData.filter(d=>d.cuenta==='efectivo').reduce((s,d)=>s+d.importe,0);
+    efEl.textContent = (efMes>=0?'+':'-') + fmt(Math.abs(efMes));
+    efEl.style.color = efMes >= 0 ? 'var(--accent)' : 'var(--red)';
+  }
 
   // ── Saldos por banco (acumulado total, no solo mes) ──────────
   const allBancoMovs = data.filter(d=>d.cuenta==='banco');
