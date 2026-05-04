@@ -1667,9 +1667,22 @@ function renderCatPicker() {
   const picker = document.getElementById('cat-picker');
   const emojis = {'Nómina':'💼','Variable Lucía':'⭐','Atocha':'🏠','Pisos Cristina':'🏡','Ayuda niños':'🎁','Otros ingresos':'💰'};
   if (modalTipo === 'ingreso') {
-    picker.innerHTML = INCOME_CATS.map(c => `
-      <button class="cat-pick-btn ${c===modalCat?'active':''}" onclick="modalCat='${c}';renderCatPicker()">
-        <span class="pick-emoji">${emojis[c]||'💰'}</span>${c}
+    // Build dynamic list: INCOME_CATS base + saldo_ant + customIncomeLines
+    const ingCatMapModal = {nomina:'Nómina',variable:'Variable Lucía',atocha:'Atocha',cristina:'Pisos Cristina',ninos:'Ayuda niños',saldo_ant:'Saldo mes anterior'};
+    const dynamicIncomeCats = [
+      ...Object.values(ingCatMapModal),
+      ...customIncomeLines.map(l => l.label),
+      'Otros ingresos'
+    ];
+    const allIncomeEmojis = (cat) => {
+      const base = {'Nómina':'💼','Variable Lucía':'⭐','Atocha':'🏠','Pisos Cristina':'🏡','Ayuda niños':'🎁','Saldo mes anterior':'🔄','Otros ingresos':'💰'};
+      if (base[cat]) return base[cat];
+      const custom = customIncomeLines.find(l=>l.label===cat);
+      return custom?.emoji || '💰';
+    };
+    picker.innerHTML = dynamicIncomeCats.map(cat => `
+      <button class="cat-pick-btn ${cat===modalCat?'active':''}" onclick="modalCat='${cat}';renderCatPicker()">
+        <span class="pick-emoji">${allIncomeEmojis(cat)}</span>${cat}
       </button>`).join('');
   } else {
     const allCats = [...CATS, ...customCats.map(cc=>cc.label)];
