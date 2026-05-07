@@ -1690,7 +1690,13 @@ function renderCatPicker() {
         <span class="pick-emoji">${allIncomeEmojis(cat)}</span>${cat}
       </button>`).join('');
   } else {
-    const allCats = [...CATS, ...customCats.map(cc=>cc.label)];
+    // Include fijos categories that aren't already in CATS
+    const fijosCatNames = getFijosLines(currentMonth).map(l => {
+      const map = {hipoteca:'Hipoteca+Coche',colegio:'Colegio',maritza:'Maritza',seguros:'Seguros',comunidad:'Comunidad',telefono:'Teléfono',suscripc:'Suscripciones'};
+      return map[l.id] || l.label;
+    });
+    const extraFijos = fijosCatNames.filter(cat => !CATS.includes(cat));
+    const allCats = [...CATS, ...extraFijos, ...customCats.map(cc=>cc.label)];
     const allEmojis = cat => customCats.find(cc=>cc.label===cat)?.emoji || CAT_EMOJI[cat] || '📦';
     picker.innerHTML = allCats.map(c => `
       <button class="cat-pick-btn ${c===modalCat?'active':''}" onclick="modalCat='${c}';renderCatPicker()">
