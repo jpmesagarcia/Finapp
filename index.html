@@ -1610,7 +1610,11 @@ function renderMovimientos() {
     currentFilter === 'gasto' ? mData.filter(d=>d.tipo==='gasto') :
     currentFilter === 'ingreso' ? mData.filter(d=>d.tipo==='ingreso') :
     mData.filter(d=>d.cuenta===currentFilter);
-  filtered = [...filtered].reverse();
+  // Sort by fecha descending, fallback to id descending
+  filtered = [...filtered].sort((a,b) => {
+    if (a.fecha && b.fecha) return b.fecha.localeCompare(a.fecha);
+    return b.id - a.id;
+  });
 
   // Update count
   const movCnt = document.getElementById('mov-count');
@@ -1630,7 +1634,7 @@ function renderMovimientos() {
       <div class="mov-icon">${CAT_EMOJI[mov.categoria]||'📦'}</div>
       <div class="mov-info">
         <div class="mov-concepto">${mov.concepto}</div>
-        <div class="mov-meta">${mov.categoria} · <span class="mov-cuenta-badge">${mov.cuenta}</span></div>
+        <div class="mov-meta">${mov.fecha ? mov.fecha.slice(5).replace('-','/') + ' · ' : ''}${mov.categoria} · <span class="mov-cuenta-badge">${mov.cuenta}</span></div>
       </div>
       <div class="mov-amount ${mov.tipo==='ingreso'?'pos':'neg'}">${mov.tipo==='ingreso'?'+':'-'}${fmt(Math.abs(mov.importe))}</div>
       <div style="font-size:18px;padding:0 4px;opacity:0.5;flex-shrink:0">✏️</div>`;
@@ -2250,12 +2254,21 @@ function confirmImport() {
   const ahorroMovs = importBuffer.filter(m => m._ahorro);
   const regularMovs = importBuffer.filter(m => !m._ahorro);
 
-  // Regular movements → data array
+  // Regular movements → data array (skip duplicates)
+  const existingFingerprints = new Set(
+    data.map(d => `${d.fecha}|${d.concepto}|${d.importe}|${d.cuenta||''}`)
+  );
+  let added = 0, skipped = 0;
   regularMovs.forEach(m => {
     const {_ahorro, bolsa, ...mov} = m;
+    const fp = `${mov.fecha}|${mov.concepto}|${mov.importe}|${mov.cuenta||''}`;
+    if (existingFingerprints.has(fp)) { skipped++; return; }
+    existingFingerprints.add(fp);
     data.push({ id: nextId++, ...mov, mes: m.mes || currentMonth });
+    added++;
   });
-  if (regularMovs.length) saveData();
+  if (added > 0) saveData();
+  if (skipped > 0) toast(`✓ ${added} importados, ${skipped} duplicados omitidos`);
 
   // Ahorro movements → ahorroData
   if (ahorroMovs.length) {
