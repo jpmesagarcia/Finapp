@@ -1851,13 +1851,26 @@ function parseNum(s) {
 }
 function parseDate(s) {
   if (!s) return new Date().toISOString().split('T')[0];
-  s = s.replace(/"/g,'').trim();
+  // Excel serial number (raw:true from SheetJS) e.g. 46156
+  if (typeof s === 'number' || (typeof s === 'string' && /^\d{5}$/.test(s.trim()))) {
+    const serial = parseInt(s);
+    // Excel epoch: Jan 1 1900 = 1, but has leap year bug so use Jan 0 1900
+    const d = new Date((serial - 25569) * 86400 * 1000);
+    const y = d.getUTCFullYear();
+    const mo = String(d.getUTCMonth()+1).padStart(2,'0');
+    const day = String(d.getUTCDate()).padStart(2,'0');
+    return `${y}-${mo}-${day}`;
+  }
+  s = String(s).replace(/"/g,'').trim();
   // dd/mm/yyyy
   let m = s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
   if (m) return `${m[3]}-${m[2]}-${m[1]}`;
-  // yyyy-mm-dd
-  m = s.match(/^(\d{4})[\/\-](\d{2})[\/\-](\d{2})$/);
-  if (m) return s;
+  // yyyy-mm-dd or yyyy-mm-dd HH:MM:SS
+  m = s.match(/^(\d{4})[\/\-](\d{2})[\/\-](\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  // dd/mm/yyyy HH:MM
+  m = s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})\s/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
   return new Date().toISOString().split('T')[0];
 }
 function splitCSVLine(line) {
@@ -2043,8 +2056,8 @@ function parseCaixaBankRows(rows) {
     const fecha = parseDate(rawFecha.split(' ')[0]); // strip time if present
     const concepto = String(r[2] || '').trim();
     if (!concepto || /^fecha$/i.test(concepto) || /^movimiento$/i.test(concepto)) continue;
-    const rawImporte = String(r[4] || '').trim();
-    const importe = parseFloat(rawImporte.replace(',','.')) || 0;
+    const raw4 = r[4];
+    const importe = typeof raw4 === 'number' ? raw4 : parseEuroNum(String(raw4||''));
     if (importe === 0) continue;
     const mes = dateMes(fecha);
     importBuffer.push({ fecha, concepto, importe, categoria: autoCat(concepto), tipo: importe>0?'ingreso':'gasto', cuenta: 'banco', mes });
