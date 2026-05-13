@@ -1129,8 +1129,8 @@ const _MONTH_SHORT_ES = ['Ene','Feb','Mar','Abr','May','Jun',
   const curYear  = now.getFullYear();
 
   window.MONTHS = [];
-  window.MONTH_DATES = {};   // label -> 'Mmm YY'  (usado en sparkline y cabecera)
-  window._MONTH_KEY_MAP = {}; // 'YYYY-MM' -> label
+  window.MONTH_DATES = {};
+  window._MONTH_KEY_MAP = {};
 
   let y = START_YEAR, m = START_MONTH;
   while (y < endYear || (y === endYear && m <= endMonth)) {
@@ -2636,12 +2636,16 @@ function renderPresupuesto() {
       renderDashboard();
     }, isCustom ? () => {
       if (!confirm('¿Eliminar "' + line.label + '" para este mes?')) return;
-      // Hide only for this month, don't delete globally
       if (!budgets[mes]) budgets[mes] = {};
       if (!budgets[mes].hiddenIncome) budgets[mes].hiddenIncome = [];
       if (!budgets[mes].hiddenIncome.includes(line.id)) budgets[mes].hiddenIncome.push(line.id);
+      // Poner a 0 el valor para que no compute en totales
+      if (!budgets[mes].income) budgets[mes].income = {};
+      budgets[mes].income[line.id] = 0;
       saveBudgets();
       renderPresupuesto();
+      updateBudSummary(mes);
+      renderDashboard();
     } : null);
   });
 
@@ -2707,7 +2711,10 @@ function updateBudSummary(mes) {
   const totalIng    = incomeLines.reduce((s,l) => s+l.importe, 0);
   const totalFijos  = fijosLines.reduce((s,l) => s+l.importe, 0);
   const totalVarBuiltin = builtinVarCats.reduce((s,cat) => s+(catBud[cat]||0), 0);
-  const totalVarCustom  = customCats.reduce((s,cc) => s+((budgets[mes]?.cats?.[cc.label])||cc.importe||0), 0);
+  const hiddenCatsMes   = (budgets[mes] && budgets[mes].hiddenCats) || [];
+  const totalVarCustom  = customCats
+    .filter(cc => !hiddenCatsMes.includes(cc.label))
+    .reduce((s,cc) => s+((budgets[mes]?.cats?.[cc.label])||cc.importe||0), 0);
   const totalGastos = totalFijos + totalVarBuiltin + totalVarCustom;
   const margen      = totalIng - totalGastos;
   const el = document.getElementById('bud-summary');
@@ -2963,6 +2970,9 @@ function hideCustomCatForMonth(id, mes) {
   if (!budgets[mes]) budgets[mes] = {};
   if (!budgets[mes].hiddenCats) budgets[mes].hiddenCats = [];
   if (!budgets[mes].hiddenCats.includes(cat.label)) budgets[mes].hiddenCats.push(cat.label);
+  // Poner a 0 el valor presupuestado para que no compute en totales
+  if (!budgets[mes].cats) budgets[mes].cats = {...DEFAULT_BUDGET};
+  budgets[mes].cats[cat.label] = 0;
   saveBudgets();
   renderPresupuesto();
   updateBudSummary(mes);
