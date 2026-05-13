@@ -1168,8 +1168,13 @@ function getBudget(mes) {
 }
 function getIncomeLines(mes) {
   const overrides = (budgets[mes] && budgets[mes].income) || {};
-  const defaults = DEFAULT_INCOME_LINES.map(l => ({...l, importe: overrides[l.id] ?? l.importe}));
-  const customs  = customIncomeLines.map(l => ({...l, importe: (budgets[mes]?.income?.[l.id]) ?? l.importe}));
+  const hidden = (budgets[mes] && budgets[mes].hiddenIncome) || [];
+  const defaults = DEFAULT_INCOME_LINES
+    .filter(l => !hidden.includes(l.id))
+    .map(l => ({...l, importe: overrides[l.id] ?? l.importe}));
+  const customs = customIncomeLines
+    .filter(l => !hidden.includes(l.id))
+    .map(l => ({...l, importe: (budgets[mes]?.income?.[l.id]) ?? l.importe}));
   return [...defaults, ...customs];
 }
 function getFijosLines(mes) {
@@ -2609,9 +2614,12 @@ function renderPresupuesto() {
       updateBudSummary(mes);
       renderDashboard();
     }, isCustom ? () => {
-      if (!confirm('¿Eliminar "' + line.label + '"?')) return;
-      customIncomeLines.splice(customIncomeLines.findIndex(cl=>cl.id===line.id), 1);
-      saveCustomIncomeLines();
+      if (!confirm('¿Eliminar "' + line.label + '" para este mes?')) return;
+      // Hide only for this month, don't delete globally
+      if (!budgets[mes]) budgets[mes] = {};
+      if (!budgets[mes].hiddenIncome) budgets[mes].hiddenIncome = [];
+      if (!budgets[mes].hiddenIncome.includes(line.id)) budgets[mes].hiddenIncome.push(line.id);
+      saveBudgets();
       renderPresupuesto();
     } : null);
   });
@@ -2636,8 +2644,9 @@ function renderPresupuesto() {
   CATS.filter(c => !FIJOS_CATS.includes(c) && c !== 'Fijos').forEach(cat => {
     editRow(CAT_EMOJI[cat]||'📦', cat, catBud[cat]||0, val => { saveBudgetCat(mes, cat, val); updateBudSummary(mes); renderDashboard(); });
   });
-  // Custom cats
-  customCats.forEach(cc => {
+  // Custom cats (skip hidden for this month)
+  const hiddenCatsMes = (budgets[mes] && budgets[mes].hiddenCats) || [];
+  customCats.filter(cc => !hiddenCatsMes.includes(cc.label)).forEach(cc => {
     const row = document.createElement('div');
     row.className = 'bud-row ok';
     row.style.cssText = 'display:flex;align-items:center;gap:12px';
@@ -2654,7 +2663,7 @@ function renderPresupuesto() {
         onchange="saveBudgetCat('${mes}','${cc.label}',parseFloat(this.value)||0);updateBudSummary('${mes}');renderDashboard()"
         onkeydown="if(event.key==='Enter')this.blur()">
       <span style="font-size:12px;color:var(--text3);flex-shrink:0">€/mes</span>
-      <button onclick="deleteCustomCat('${cc.id}')"
+      <button onclick="hideCustomCatForMonth('${cc.id}','${mes}')"
         style="background:transparent;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:0 2px;line-height:1"
         title="Eliminar categoría">×</button>`;
     list.appendChild(row);
@@ -2926,6 +2935,18 @@ function saveNewCat() {
   renderDashboard();
   toast('✓ Categoría "' + label + '" creada');
 }
+function hideCustomCatForMonth(id, mes) {
+  const cat = customCats.find(c=>c.id===id);
+  if (!cat) return;
+  if (!confirm(`¿Ocultar "${cat.label}" en ${mes}?\nNo se borrará en otros meses.`)) return;
+  if (!budgets[mes]) budgets[mes] = {};
+  if (!budgets[mes].hiddenCats) budgets[mes].hiddenCats = [];
+  if (!budgets[mes].hiddenCats.includes(cat.label)) budgets[mes].hiddenCats.push(cat.label);
+  saveBudgets();
+  renderPresupuesto();
+  updateBudSummary(mes);
+}
+
 function deleteCustomCat(id) {
   if (!confirm('¿Eliminar esta categoría?')) return;
   const cat = customCats.find(c=>c.id===id);
