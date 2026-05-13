@@ -1114,8 +1114,36 @@ svg.ring { transform: rotate(-90deg); }
 // ─── DATA ───────────────────────────────────────────────────
 const SEED_DATA = [];
 
-const MONTHS = ['Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre','Enero','Febrero','Marzo','Abril','Mayo','Junio 26','Julio 26'];
-const MONTH_DATES = {Junio:'Jun 25',Julio:'Jul 25',Agosto:'Ago 25',Septiembre:'Sep 25',Octubre:'Oct 25',Noviembre:'Nov 25',Diciembre:'Dic 25',Enero:'Ene 26',Febrero:'Feb 26',Marzo:'Mar 26',Abril:'Abr 26',Mayo:'May 26','Junio 26':'Jun 26','Julio 26':'Jul 26'};
+// ── MESES — generados dinámicamente desde Mayo 2026, sin techo fijo ──
+const _MONTH_NAMES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const _MONTH_SHORT_ES = ['Ene','Feb','Mar','Abr','May','Jun',
+  'Jul','Ago','Sep','Oct','Nov','Dic'];
+
+(function buildMonths() {
+  const START_YEAR = 2026, START_MONTH = 5; // Mayo 2026
+  const now = new Date();
+  const rawEnd = now.getMonth() + 1 + 12;
+  const endYear  = now.getFullYear() + Math.floor((rawEnd - 1) / 12);
+  const endMonth = ((rawEnd - 1) % 12) + 1;
+  const curYear  = now.getFullYear();
+
+  window.MONTHS = [];
+  window.MONTH_DATES = {};   // label -> 'Mmm YY'  (usado en sparkline y cabecera)
+  window._MONTH_KEY_MAP = {}; // 'YYYY-MM' -> label
+
+  let y = START_YEAR, m = START_MONTH;
+  while (y < endYear || (y === endYear && m <= endMonth)) {
+    const name  = _MONTH_NAMES_ES[m-1];
+    const short = _MONTH_SHORT_ES[m-1];
+    const label = (y === curYear) ? name : name + ' ' + String(y).slice(2);
+    const yy    = String(y).slice(2);
+    window.MONTHS.push(label);
+    window.MONTH_DATES[label] = short + ' ' + yy;
+    window._MONTH_KEY_MAP[y + '-' + String(m).padStart(2,'0')] = label;
+    m++; if (m > 12) { m = 1; y++; }
+  }
+})();
 const INCOME_CATS = ['Nómina','Variable Lucía','Atocha','Pisos Cristina','Ayuda niños','Otros ingresos'];
 const CATS = ['Comida','Transporte','Niños','Gasolina','Gastos casa','Luz','Agua','Vida social','Hipoteca+Coche','Colegio','Seguros','Fijos','Maritza','Otros'];
 const CAT_EMOJI = {Comida:'🛒',Transporte:'🚌',Niños:'👶',Gasolina:'⛽','Gastos casa':'🏠',Luz:'💡',Agua:'💧','Vida social':'🎉',"Hipoteca+Coche":'🏦',Colegio:'🎓',Seguros:'🛡️',Comunidad:'🏘️',Fijos:'📋',Maritza:'👩',Otros:'📦',Ingreso:'💰'};
@@ -1208,15 +1236,8 @@ function loadBudgets() {
 // ─── STATE ──────────────────────────────────────────────────
 let data = [], currentMonth = (function() {
   const now = new Date();
-  const y = now.getFullYear(), m = now.getMonth()+1;
-  const key = y+'-'+String(m).padStart(2,'0');
-  const map = {
-    '2025-06':'Junio','2025-07':'Julio','2025-08':'Agosto','2025-09':'Septiembre',
-    '2025-10':'Octubre','2025-11':'Noviembre','2025-12':'Diciembre',
-    '2026-01':'Enero','2026-02':'Febrero','2026-03':'Marzo','2026-04':'Abril',
-    '2026-05':'Mayo','2026-06':'Junio 26','2026-07':'Julio 26'
-  };
-  return map[key] || 'Mayo';
+  const key = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  return window._MONTH_KEY_MAP[key] || MONTHS[0];
 })(), currentFilter = 'all';
 let modalTipo = 'gasto', modalCat = 'Comida', modalCuenta = 'banco';
 let nextId = 800, importBuffer = [];
