@@ -233,7 +233,7 @@ svg.ring { transform: rotate(-90deg); }
 .spark-label { font-size: 9px; color: var(--text3); text-align: center; }
 
 /* ── MOVIMIENTOS ── */
-.filter-row { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
+.filter-row { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; flex-wrap: wrap; }
 .filter-row::-webkit-scrollbar { display: none; }
 .filter-chip {
   padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border);
@@ -242,6 +242,12 @@ svg.ring { transform: rotate(-90deg); }
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .filter-chip.active { background: var(--accent-dark); border-color: var(--accent-dark); color: #ffffff; }
+.mov-filter-select {
+  height: 32px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--card); color: var(--text2); font-size: 12px; font-family: 'DM Sans',sans-serif;
+  padding: 0 10px; cursor: pointer; outline: none; white-space: nowrap; flex-shrink: 0;
+}
+.mov-filter-select:focus { border-color: var(--accent-dark); color: var(--text1); }
 .mov-list { display: flex; flex-direction: column; gap: 8px; }
 .mov-item {
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm);
@@ -805,6 +811,15 @@ svg.ring { transform: rotate(-90deg); }
         <div class="filter-chip" data-filter="ingreso" onclick="setFilter(this,'ingreso')">Ingresos</div>
         <div class="filter-chip" data-filter="banco" onclick="setFilter(this,'banco')">Banco</div>
         <div class="filter-chip" data-filter="efectivo" onclick="setFilter(this,'efectivo')">Efectivo</div>
+        <select class="mov-filter-select" id="mov-cat-filter" onchange="renderMovimientos()" title="Filtrar por categoría">
+          <option value="">🏷 Categoría</option>
+        </select>
+        <select class="mov-filter-select" id="mov-sort" onchange="renderMovimientos()" title="Ordenar">
+          <option value="fecha_desc">📅 Fecha ↓</option>
+          <option value="fecha_asc">📅 Fecha ↑</option>
+          <option value="importe_desc">💶 Importe ↓</option>
+          <option value="importe_asc">💶 Importe ↑</option>
+        </select>
       </div>
       <div class="mov-list" id="mov-list"></div>
     </div>
@@ -1121,17 +1136,15 @@ const _MONTH_SHORT_ES = ['Ene','Feb','Mar','Abr','May','Jun',
   'Jul','Ago','Sep','Oct','Nov','Dic'];
 
 (function buildMonths() {
-  const START_YEAR = 2026, START_MONTH = 5; // Mayo 2026
+  const START_YEAR = 2026, START_MONTH = 5;
   const now = new Date();
   const rawEnd = now.getMonth() + 1 + 12;
   const endYear  = now.getFullYear() + Math.floor((rawEnd - 1) / 12);
   const endMonth = ((rawEnd - 1) % 12) + 1;
   const curYear  = now.getFullYear();
-
   window.MONTHS = [];
   window.MONTH_DATES = {};
   window._MONTH_KEY_MAP = {};
-
   let y = START_YEAR, m = START_MONTH;
   while (y < endYear || (y === endYear && m <= endMonth)) {
     const name  = _MONTH_NAMES_ES[m-1];
@@ -1449,6 +1462,7 @@ function renderDashboard() {
 
   // ── Previsión cierre ─────────────────────────────────────────
   // Balance actual + lo que queda por gastar de cada partida del presupuesto
+  // Excluimos tipo='ajuste' (ajustes de efectivo) para no contaminar el cálculo
   const ingresosMes = mData.filter(d=>d.tipo==='ingreso').reduce((s,d)=>s+d.importe,0);
   const gastosMes   = mData.filter(d=>d.tipo==='gasto').reduce((s,d)=>s+Math.abs(d.importe),0);
   const balanceActual = ingresosMes - gastosMes;
@@ -1632,19 +1646,41 @@ function renderMovimientos() {
   if (movLbl) movLbl.textContent = movMonth;
 
   const mData = data.filter(d => d.mes === movMonth);
+
+  // ── Poblar select de categorías con las del mes actual ──
+  const catSel = document.getElementById('mov-cat-filter');
+  if (catSel) {
+    const currentCat = catSel.value;
+    const cats = [...new Set(mData.map(d => d.categoria).filter(Boolean))].sort();
+    catSel.innerHTML = '<option value="">🏷 Categoría</option>' +
+      cats.map(c => `<option value="${c}" ${c===currentCat?'selected':''}>${CAT_EMOJI[c]||'📦'} ${c}</option>`).join('');
+  }
+
+  // ── Filtro tipo/cuenta (chips) ──
   let filtered = currentFilter === 'all' ? mData :
-    currentFilter === 'gasto' ? mData.filter(d=>d.tipo==='gasto') :
+    currentFilter === 'gasto'   ? mData.filter(d=>d.tipo==='gasto') :
     currentFilter === 'ingreso' ? mData.filter(d=>d.tipo==='ingreso') :
     mData.filter(d=>d.cuenta===currentFilter);
-  // Sort by fecha descending, fallback to id descending
-  filtered = [...filtered].sort((a,b) => {
-    if (a.fecha && b.fecha) return b.fecha.localeCompare(a.fecha);
-    return b.id - a.id;
+
+  // ── Filtro categoría ──
+  const catFilter = catSel ? catSel.value : '';
+  if (catFilter) filtered = filtered.filter(d => d.categoria === catFilter);
+
+  // ── Ordenación ──
+  const sortVal = (document.getElementById('mov-sort')?.value) || 'fecha_desc';
+  filtered = [...filtered].sort((a, b) => {
+    if (sortVal === 'fecha_desc') return (b.fecha||'').localeCompare(a.fecha||'') || b.id - a.id;
+    if (sortVal === 'fecha_asc')  return (a.fecha||'').localeCompare(b.fecha||'') || a.id - b.id;
+    if (sortVal === 'importe_desc') return Math.abs(b.importe) - Math.abs(a.importe);
+    if (sortVal === 'importe_asc')  return Math.abs(a.importe) - Math.abs(b.importe);
+    return 0;
   });
 
   // Update count
   const movCnt = document.getElementById('mov-count');
-  if (movCnt) movCnt.textContent = mData.length + ' movimiento' + (mData.length !== 1 ? 's' : '');
+  if (movCnt) movCnt.textContent = (catFilter || currentFilter !== 'all'
+    ? `${filtered.length} de ${mData.length}`
+    : mData.length + ' movimiento' + (mData.length !== 1 ? 's' : ''));
 
   const list = document.getElementById('mov-list');
   list.innerHTML = '';
@@ -1662,7 +1698,7 @@ function renderMovimientos() {
         <div class="mov-concepto">${mov.concepto}</div>
         <div class="mov-meta">${mov.fecha ? mov.fecha.slice(5).replace('-','/') + ' · ' : ''}${mov.categoria} · <span class="mov-cuenta-badge">${mov.cuenta}</span></div>
       </div>
-      <div class="mov-amount ${mov.tipo==='ingreso'?'pos':'neg'}">${mov.tipo==='ingreso'?'+':'-'}${fmt(Math.abs(mov.importe))}</div>
+      <div class="mov-amount ${mov.tipo==='ingreso'?'pos':mov.tipo==='ajuste'?'':'neg'}">${mov.tipo==='ingreso'?'+':mov.tipo==='ajuste'?'~':'-'}${fmt(Math.abs(mov.importe))}</div>
       <div style="font-size:18px;padding:0 4px;opacity:0.5;flex-shrink:0">✏️</div>`;
     item.addEventListener('click', () => openEditModal(mov.id));
     list.appendChild(item);
@@ -2346,7 +2382,7 @@ function adjustEfectivo() {
   const diff = val - efectivoBalance;
   efectivoBalance = val;
   if (diff !== 0) {
-    data.push({ id: nextId++, fecha: new Date().toISOString().split('T')[0], mes: currentMonth, concepto: 'Ajuste de efectivo', categoria: diff>0?'Ingreso':'Otros', importe: diff, tipo: diff>0?'ingreso':'gasto', cuenta: 'efectivo' });
+    data.push({ id: nextId++, fecha: new Date().toISOString().split('T')[0], mes: currentMonth, concepto: 'Ajuste de efectivo', categoria: 'Ajuste efectivo', importe: diff, tipo: 'ajuste', cuenta: 'efectivo' });
   }
   saveData();
   updateEfectivoDisplay();
@@ -2636,16 +2672,12 @@ function renderPresupuesto() {
       renderDashboard();
     }, isCustom ? () => {
       if (!confirm('¿Eliminar "' + line.label + '" para este mes?')) return;
+      // Hide only for this month, don't delete globally
       if (!budgets[mes]) budgets[mes] = {};
       if (!budgets[mes].hiddenIncome) budgets[mes].hiddenIncome = [];
       if (!budgets[mes].hiddenIncome.includes(line.id)) budgets[mes].hiddenIncome.push(line.id);
-      // Poner a 0 el valor para que no compute en totales
-      if (!budgets[mes].income) budgets[mes].income = {};
-      budgets[mes].income[line.id] = 0;
       saveBudgets();
       renderPresupuesto();
-      updateBudSummary(mes);
-      renderDashboard();
     } : null);
   });
 
@@ -2711,10 +2743,7 @@ function updateBudSummary(mes) {
   const totalIng    = incomeLines.reduce((s,l) => s+l.importe, 0);
   const totalFijos  = fijosLines.reduce((s,l) => s+l.importe, 0);
   const totalVarBuiltin = builtinVarCats.reduce((s,cat) => s+(catBud[cat]||0), 0);
-  const hiddenCatsMes   = (budgets[mes] && budgets[mes].hiddenCats) || [];
-  const totalVarCustom  = customCats
-    .filter(cc => !hiddenCatsMes.includes(cc.label))
-    .reduce((s,cc) => s+((budgets[mes]?.cats?.[cc.label])||cc.importe||0), 0);
+  const totalVarCustom  = customCats.reduce((s,cc) => s+((budgets[mes]?.cats?.[cc.label])||cc.importe||0), 0);
   const totalGastos = totalFijos + totalVarBuiltin + totalVarCustom;
   const margen      = totalIng - totalGastos;
   const el = document.getElementById('bud-summary');
@@ -2736,11 +2765,11 @@ function updateBudSummary(mes) {
 
 function prevMonthMov() {
   const idx = MONTHS.indexOf(movMonth);
-  if (idx > 0) { movMonth = MONTHS[idx-1]; renderMovimientos(); }
+  if (idx > 0) { movMonth = MONTHS[idx-1]; const s=document.getElementById('mov-cat-filter');if(s)s.value=''; renderMovimientos(); }
 }
 function nextMonthMov() {
   const idx = MONTHS.indexOf(movMonth);
-  if (idx < MONTHS.length-1) { movMonth = MONTHS[idx+1]; renderMovimientos(); }
+  if (idx < MONTHS.length-1) { movMonth = MONTHS[idx+1]; const s=document.getElementById('mov-cat-filter');if(s)s.value=''; renderMovimientos(); }
 }
 
 function prevMonthBud() {
@@ -2970,9 +2999,6 @@ function hideCustomCatForMonth(id, mes) {
   if (!budgets[mes]) budgets[mes] = {};
   if (!budgets[mes].hiddenCats) budgets[mes].hiddenCats = [];
   if (!budgets[mes].hiddenCats.includes(cat.label)) budgets[mes].hiddenCats.push(cat.label);
-  // Poner a 0 el valor presupuestado para que no compute en totales
-  if (!budgets[mes].cats) budgets[mes].cats = {...DEFAULT_BUDGET};
-  budgets[mes].cats[cat.label] = 0;
   saveBudgets();
   renderPresupuesto();
   updateBudSummary(mes);
