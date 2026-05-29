@@ -257,27 +257,12 @@ svg.ring { transform: rotate(-90deg); }
   margin-bottom: 8px;
 }
 .adelanto-item.saldado { opacity: 0.45; }
-.adelanto-persona {
-  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
-  color: var(--accent-dark); background: rgba(15,61,59,.08);
-  border-radius: 8px; padding: 2px 8px; flex-shrink: 0;
-}
-.adelanto-info { flex: 1; min-width: 0; }
-.adelanto-concepto { font-size: 13px; font-weight: 600; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.adelanto-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
-.adelanto-importe { font-size: 15px; font-weight: 700; color: var(--red); flex-shrink: 0; }
 .adelanto-saldar-btn {
   font-size: 11px; font-weight: 700; padding: 4px 10px;
   border-radius: 12px; border: 1px solid var(--accent-dark);
   background: transparent; color: var(--accent-dark); cursor: pointer; flex-shrink: 0;
 }
 .adelanto-saldar-btn:hover { background: var(--accent-dark); color: #fff; }
-.mov-filter-select {
-  height: 32px; border-radius: 20px; border: 1px solid var(--border);
-  background: var(--card); color: var(--text2); font-size: 12px; font-family: 'DM Sans',sans-serif;
-  padding: 0 10px; cursor: pointer; outline: none; white-space: nowrap; flex-shrink: 0;
-}
-.mov-filter-select:focus { border-color: var(--accent-dark); color: var(--text1); }
 .mov-list { display: flex; flex-direction: column; gap: 8px; }
 .mov-item {
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm);
@@ -735,9 +720,9 @@ svg.ring { transform: rotate(-90deg); }
             <div class="kpi-value" id="kpi-proyeccion" style="font-size:14px">—</div>
           </div>
           <div class="kpi-card" style="padding:12px 14px">
-            <div class="kpi-icon" style="font-size:16px">📊</div>
-            <div class="kpi-label">% presupuesto</div>
-            <div class="kpi-value" id="kpi-pct-bud" style="font-size:14px">—</div>
+            <div class="kpi-icon" style="font-size:16px">🏠</div>
+            <div class="kpi-label">Neto Casa</div>
+            <div class="kpi-value" id="kpi-neto-casa" style="font-size:14px">—</div>
           </div>
         </div>
 
@@ -845,6 +830,20 @@ svg.ring { transform: rotate(-90deg); }
         </div>
       </div>
 
+      <!-- ── Deudas pendientes en Movimientos ── -->
+      <div id="mov-adelantos-section" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text3)">💸 Deudas</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);cursor:pointer">
+              <input type="checkbox" id="mov-show-saldadas" onchange="renderAdelantos()"> Ver saldadas
+            </label>
+            <button onclick="openAdelantoModal()" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid var(--accent-dark);background:transparent;color:var(--accent-dark);cursor:pointer">+ Anotar</button>
+          </div>
+        </div>
+        <div id="adelantos-list"></div>
+      </div>
+
       <div class="filter-row" id="filter-row">
         <div class="filter-chip active" data-filter="all" onclick="setFilter(this,'all')">Todos</div>
         <div class="filter-chip" data-filter="gasto" onclick="setFilter(this,'gasto')">Gastos</div>
@@ -862,20 +861,6 @@ svg.ring { transform: rotate(-90deg); }
         </select>
       </div>
       <div class="mov-list" id="mov-list"></div>
-
-      <!-- ── Deudas pendientes en Movimientos ── -->
-      <div id="mov-adelantos-section" style="margin-top:20px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text3)">💸 Deudas</div>
-          <div style="display:flex;align-items:center;gap:10px">
-            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);cursor:pointer">
-              <input type="checkbox" id="mov-show-saldadas" onchange="renderAdelantos()"> Ver saldadas
-            </label>
-            <button onclick="openAdelantoModal()" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid var(--accent-dark);background:transparent;color:var(--accent-dark);cursor:pointer">+ Anotar</button>
-          </div>
-        </div>
-        <div id="adelantos-list"></div>
-      </div>
     </div>
 
     <!-- PRESUPUESTO -->
@@ -1059,7 +1044,7 @@ svg.ring { transform: rotate(-90deg); }
 <!-- MODAL añadir -->
 <!-- ── MODAL ADELANTOS ── -->
 <div class="overlay" id="adelanto-overlay" onclick="closeAdelantoModal(event)" style="display:none">
-  <div class="modal" onclick="event.stopPropagation()" style="max-width:360px">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:360px;padding:24px 20px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
       <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px">💸 Anotar deuda</div>
       <button onclick="closeAdelantoModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
@@ -1067,8 +1052,7 @@ svg.ring { transform: rotate(-90deg); }
     <div style="display:flex;flex-direction:column;gap:12px">
       <div>
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">¿Quién debe?</div>
-        <input id="adl-de" type="text" placeholder="Ej: Juanpi, Lucía, Mes, Amigo..." autocomplete="off"
-          list="adl-de-list"
+        <input id="adl-de" type="text" placeholder="Ej: Juanpi, Lucía, Mes, Amigo..." autocomplete="off" list="adl-de-list"
           style="width:100%;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);font-size:13px;box-sizing:border-box;font-family:'DM Sans',sans-serif">
         <datalist id="adl-de-list">
           <option value="Juanpi"><option value="Lucía"><option value="Mes"><option value="Amigo">
@@ -1076,8 +1060,7 @@ svg.ring { transform: rotate(-90deg); }
       </div>
       <div>
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">¿A quién?</div>
-        <input id="adl-a" type="text" placeholder="Ej: Casa, Ahorro, Lourdes, Lucía..." autocomplete="off"
-          list="adl-a-list"
+        <input id="adl-a" type="text" placeholder="Ej: Casa, Ahorro, Lourdes, Lucía..." autocomplete="off" list="adl-a-list"
           style="width:100%;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);font-size:13px;box-sizing:border-box;font-family:'DM Sans',sans-serif">
         <datalist id="adl-a-list">
           <option value="Casa"><option value="Ahorro"><option value="Lourdes"><option value="Juanpi"><option value="Lucía">
@@ -1252,7 +1235,7 @@ const _MONTH_SHORT_ES = ['Ene','Feb','Mar','Abr','May','Jun',
     m++; if (m > 12) { m = 1; y++; }
   }
 })();
-const INCOME_CATS = ['Nómina','Variable Lucía','Atocha','Pisos Cristina','Ayuda niños','Otros ingresos'];
+const INCOME_CATS = ['Nómina','Variable Lucía','Atocha','Pisos Cristina','Ayuda niños','Adelantos','Otros ingresos'];
 const CATS = ['Comida','Transporte','Niños','Gasolina','Gastos casa','Luz','Agua','Vida social','Hipoteca+Coche','Colegio','Seguros','Fijos','Maritza','Adelantos','Otros'];
 const CAT_EMOJI = {Comida:'🛒',Transporte:'🚌',Niños:'👶',Gasolina:'⛽','Gastos casa':'🏠',Luz:'💡',Agua:'💧','Vida social':'🎉',"Hipoteca+Coche":'🏦',Colegio:'🎓',Seguros:'🛡️',Comunidad:'🏘️',Fijos:'📋',Maritza:'👩',Adelantos:'💸',Otros:'📦',Ingreso:'💰','Ajuste efectivo':'⚖️'};
 const CAT_COLORS = {Comida:'#00d4aa',Transporte:'#0099ff',Niños:'#ff9f43',Gasolina:'#ff6b6b','Gastos casa':'#a29bfe',Luz:'#ffd32a',Agua:'#74b9ff','Vida social':'#fd79a8',"Hipoteca+Coche":'#e84393',Colegio:'#6c5ce7',Seguros:'#00cec9',Comunidad:'#fdcb6e',Fijos:'#636e72',Maritza:'#fd79a8',Adelantos:'#f4b23b',Otros:'#b2bec3'};
@@ -1530,19 +1513,15 @@ function renderDashboard() {
   if (accCaja)  accCaja.textContent  = saldoCajamar !== 0 ? fmt(saldoCajamar) : '—';
   (document.getElementById('acc-efectivo')||{}).textContent = fmt(efectivoBalance);
 
-  // ── % Presupuesto consumido ──────────────────────────────────
-  const pctEl = document.getElementById('kpi-pct-bud');
-  if (pctEl) {
-    const catBudPct = getBudget(currentMonth);
-    const fijosLinesPct = getFijosLines(currentMonth);
-    const incomeLinesPct = getIncomeLines(currentMonth);
-    const totalPresup = fijosLinesPct.reduce((s,l)=>s+l.importe,0) +
-      CATS.filter(cat=>!['Hipoteca+Coche','Colegio','Seguros','Maritza'].includes(cat)&&cat!=='Fijos')
-          .reduce((s,cat)=>s+(catBudPct[cat]||0),0);
-    const gastadoPct = mData.filter(d=>d.tipo==='gasto').reduce((s,d)=>s+Math.abs(d.importe),0);
-    const pct = totalPresup > 0 ? Math.round(gastadoPct/totalPresup*100) : 0;
-    pctEl.textContent = pct + '%';
-    pctEl.style.color = pct > 100 ? 'var(--red)' : pct > 80 ? 'var(--orange)' : 'var(--accent)';
+  // ── Neto Casa ────────────────────────────────────────────────
+  const netoCasaEl = document.getElementById('kpi-neto-casa');
+  if (netoCasaEl) {
+    const pendientes = adelantos.filter(a => !a.saldado);
+    const debenACasa = pendientes.filter(a => a.a === 'Casa').reduce((s,a) => s + a.importe, 0);
+    const casaDebe   = pendientes.filter(a => a.de === 'Casa').reduce((s,a) => s + a.importe, 0);
+    const neto = debenACasa - casaDebe;
+    netoCasaEl.textContent = (neto >= 0 ? '+' : '-') + fmt(Math.abs(neto));
+    netoCasaEl.style.color = neto > 0 ? 'var(--accent)' : neto < 0 ? 'var(--red)' : 'var(--text3)';
   }
 
   // ── Bolsas de ahorro en dashboard ────────────────────────────
@@ -1739,10 +1718,9 @@ function renderDashboard() {
 function renderMovimientos() {
   const movLbl = document.getElementById('mov-month-label');
   if (movLbl) movLbl.textContent = movMonth;
-
   const mData = data.filter(d => d.mes === movMonth);
 
-  // Poblar select de categorías
+  // Poblar select categorías
   const catSel = document.getElementById('mov-cat-filter');
   if (catSel) {
     const currentCat = catSel.value;
@@ -1840,7 +1818,7 @@ function renderCatPicker() {
       'Otros ingresos'
     ];
     const allIncomeEmojis = (cat) => {
-      const base = {'Nómina':'💼','Variable Lucía':'⭐','Atocha':'🏠','Pisos Cristina':'🏡','Ayuda niños':'🎁','Saldo mes anterior':'🔄','Otros ingresos':'💰'};
+      const base = {'Nómina':'💼','Variable Lucía':'⭐','Atocha':'🏠','Pisos Cristina':'🏡','Ayuda niños':'🎁','Adelantos':'💸','Saldo mes anterior':'🔄','Otros ingresos':'💰'};
       if (base[cat]) return base[cat];
       const custom = customIncomeLines.find(l=>l.label===cat);
       return custom?.emoji || '💰';
@@ -2766,12 +2744,15 @@ function renderPresupuesto() {
       renderDashboard();
     }, isCustom ? () => {
       if (!confirm('¿Eliminar "' + line.label + '" para este mes?')) return;
-      // Hide only for this month, don't delete globally
       if (!budgets[mes]) budgets[mes] = {};
       if (!budgets[mes].hiddenIncome) budgets[mes].hiddenIncome = [];
       if (!budgets[mes].hiddenIncome.includes(line.id)) budgets[mes].hiddenIncome.push(line.id);
+      if (!budgets[mes].income) budgets[mes].income = {};
+      budgets[mes].income[line.id] = 0;
       saveBudgets();
       renderPresupuesto();
+      updateBudSummary(mes);
+      renderDashboard();
     } : null);
   });
 
@@ -2837,7 +2818,10 @@ function updateBudSummary(mes) {
   const totalIng    = incomeLines.reduce((s,l) => s+l.importe, 0);
   const totalFijos  = fijosLines.reduce((s,l) => s+l.importe, 0);
   const totalVarBuiltin = builtinVarCats.reduce((s,cat) => s+(catBud[cat]||0), 0);
-  const totalVarCustom  = customCats.reduce((s,cc) => s+((budgets[mes]?.cats?.[cc.label])||cc.importe||0), 0);
+  const hiddenCatsMes   = (budgets[mes] && budgets[mes].hiddenCats) || [];
+  const totalVarCustom  = customCats
+    .filter(cc => !hiddenCatsMes.includes(cc.label))
+    .reduce((s,cc) => s+((budgets[mes]?.cats?.[cc.label])||cc.importe||0), 0);
   const totalGastos = totalFijos + totalVarBuiltin + totalVarCustom;
   const margen      = totalIng - totalGastos;
   const el = document.getElementById('bud-summary');
@@ -3093,6 +3077,8 @@ function hideCustomCatForMonth(id, mes) {
   if (!budgets[mes]) budgets[mes] = {};
   if (!budgets[mes].hiddenCats) budgets[mes].hiddenCats = [];
   if (!budgets[mes].hiddenCats.includes(cat.label)) budgets[mes].hiddenCats.push(cat.label);
+  if (!budgets[mes].cats) budgets[mes].cats = {...DEFAULT_BUDGET};
+  budgets[mes].cats[cat.label] = 0;
   saveBudgets();
   renderPresupuesto();
   updateBudSummary(mes);
@@ -3132,7 +3118,7 @@ let ahorroData = {
   movimientos: [], // historial de movimientos
 };
 
-// ─── ADELANTOS ───────────────────────────────────────────────
+// ─── ADELANTOS / DEUDAS ──────────────────────────────────────
 let adelantos = [];
 
 function loadAdelantos() {
@@ -3165,16 +3151,12 @@ function saveAdelanto() {
   if (!de) { toast('⚠️ Indica quién debe'); return; }
   if (!a)  { toast('⚠️ Indica a quién se debe'); return; }
   if (!importe || importe <= 0) { toast('⚠️ Indica un importe válido'); return; }
-  adelantos.push({
-    id: Date.now(),
-    de, a, importe, concepto,
-    fecha: new Date().toISOString().split('T')[0],
-    saldado: false,
-    fechaSaldado: null,
-  });
+  adelantos.push({ id: Date.now(), de, a, importe, concepto,
+    fecha: new Date().toISOString().split('T')[0], saldado: false, fechaSaldado: null });
   saveAdelantos();
   closeAdelantoModal();
   renderAdelantos();
+  renderDashboard();
   toast(`✓ Deuda anotada: ${de} → ${a}`);
 }
 function saldarAdelanto(id) {
@@ -3185,61 +3167,53 @@ function saldarAdelanto(id) {
   adl.fechaSaldado = new Date().toISOString().split('T')[0];
   saveAdelantos();
   renderAdelantos();
+  renderDashboard();
   toast('✓ Deuda saldada');
 }
 function renderAdelantos() {
   const pendientes = adelantos.filter(a => !a.saldado);
-  const saldadas   = adelantos.filter(a => a.saldado);
   const mostrarSaldadas = document.getElementById('mov-show-saldadas')?.checked;
 
-  // ── Dashboard: resumen compacto por par De→A ──────────────────
+  // ── Dashboard: resumen compacto por par De→A ──
   const dashEl = document.getElementById('adelantos-dash-resumen');
   if (dashEl) {
     if (!pendientes.length) {
       dashEl.innerHTML = '<div style="font-size:12px;color:var(--text3)">Sin deudas pendientes ✓</div>';
     } else {
-      // Agrupar por "de → a"
       const grupos = {};
-      pendientes.forEach(a => {
-        const k = `${a.de}||${a.a}`;
-        grupos[k] = (grupos[k] || 0) + a.importe;
-      });
-      dashEl.innerHTML = Object.entries(grupos).map(([k, total]) => {
-        const [de, a] = k.split('||');
-        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+      pendientes.forEach(a => { const k=`${a.de}||${a.a}`; grupos[k]=(grupos[k]||0)+a.importe; });
+      dashEl.innerHTML = Object.entries(grupos).map(([k,total]) => {
+        const [de,a] = k.split('||');
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)">
           <div style="font-size:13px;color:var(--text1)"><span style="font-weight:700">${de}</span> <span style="color:var(--text3);font-size:11px">debe a</span> <span style="font-weight:700">${a}</span></div>
           <div style="font-size:14px;font-weight:700;color:var(--red)">${fmt(total)}</div>
         </div>`;
       }).join('') +
-      `<div style="text-align:right;margin-top:6px">
-        <span style="font-size:10px;color:var(--text3);cursor:pointer;text-decoration:underline" onclick="showPage('movimientos')">Ver detalle →</span>
-      </div>`;
+      `<div style="text-align:right;margin-top:6px"><span style="font-size:10px;color:var(--text3);cursor:pointer;text-decoration:underline" onclick="showPage('movimientos')">Ver detalle →</span></div>`;
     }
   }
 
-  // ── Movimientos: lista detallada ──────────────────────────────
+  // ── Movimientos: lista detallada ──
   const listEl = document.getElementById('adelantos-list');
   if (!listEl) return;
-
   const items = mostrarSaldadas ? adelantos : pendientes;
   if (!items.length) {
     listEl.innerHTML = '<div style="text-align:center;color:var(--text3);padding:12px 0;font-size:12px">Sin deudas anotadas</div>';
     return;
   }
-
   listEl.innerHTML = items.map(a => `
-    <div class="adelanto-item ${a.saldado ? 'saldado' : ''}">
+    <div class="adelanto-item ${a.saldado?'saldado':''}">
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:700;color:var(--text1)">
           <span style="color:var(--accent-dark)">${a.de}</span>
           <span style="color:var(--text3);font-size:11px;margin:0 4px">debe a</span>
           <span style="color:var(--text2)">${a.a}</span>
         </div>
-        ${a.concepto ? `<div style="font-size:12px;color:var(--text3);margin-top:2px">${a.concepto}</div>` : ''}
-        <div style="font-size:11px;color:var(--text3);margin-top:2px">${a.fecha.slice(5).replace('-','/')}${a.saldado ? ` · <span style="color:var(--accent)">Saldado ${a.fechaSaldado?.slice(5).replace('-','/')}</span>` : ''}</div>
+        ${a.concepto?`<div style="font-size:12px;color:var(--text3);margin-top:2px">${a.concepto}</div>`:''}
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${a.fecha.slice(5).replace('-','/')}${a.saldado?` · <span style="color:var(--accent)">Saldado ${a.fechaSaldado?.slice(5).replace('-','/')}</span>`:''}</div>
       </div>
       <div style="font-size:15px;font-weight:700;color:${a.saldado?'var(--text3)':'var(--red)'};flex-shrink:0;margin:0 10px">${fmt(a.importe)}</div>
-      ${!a.saldado ? `<button class="adelanto-saldar-btn" onclick="saldarAdelanto(${a.id})">✓ Saldado</button>` : ''}
+      ${!a.saldado?`<button class="adelanto-saldar-btn" onclick="saldarAdelanto(${a.id})">✓ Saldado</button>`:''}
     </div>`).join('');
 }
 
