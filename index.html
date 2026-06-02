@@ -1923,14 +1923,8 @@ function handleFileAhorro(input) {
   }
 }
 function dateMes(fecha) {
-  // Map yyyy-mm-dd to our month names
-  const map = {
-    '2025-06':'Junio','2025-07':'Julio','2025-08':'Agosto','2025-09':'Septiembre',
-    '2025-10':'Octubre','2025-11':'Noviembre','2025-12':'Diciembre',
-    '2026-01':'Enero','2026-02':'Febrero','2026-03':'Marzo','2026-04':'Abril','2026-05':'Mayo'
-  };
   const ym = fecha ? fecha.slice(0,7) : '';
-  return map[ym] || currentMonth;
+  return window._MONTH_KEY_MAP[ym] || currentMonth;
 }
 
 function parseEuroNum(s) {
