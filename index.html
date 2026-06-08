@@ -981,6 +981,10 @@ svg.ring { transform: rotate(-90deg); }
               style="padding:6px 12px;border-radius:8px;border:none;background:transparent;color:var(--text2);font-size:12px;font-weight:500;cursor:pointer">
               💳 Por cuenta
             </button>
+            <button id="aho-view-extracto" onclick="setAhorroView('extracto')"
+              style="padding:6px 12px;border-radius:8px;border:none;background:transparent;color:var(--text2);font-size:12px;font-weight:500;cursor:pointer">
+              📄 Extracto
+            </button>
           </div>
           <button onclick="openAhorroModal()" style="padding:7px 13px;border-radius:var(--radius-sm);border:none;background:var(--accent-dark);color:#fff;font-size:13px;font-weight:600;cursor:pointer">+ Añadir</button>
         </div>
@@ -3453,19 +3457,82 @@ function renderAhorroBolsas() {
   }
 }
 
-let ahorroViewMode = 'bolsas'; // 'bolsas' | 'cuentas'
+let ahorroViewMode = 'bolsas'; // 'bolsas' | 'cuentas' | 'extracto'
+let ahorroExtractoCuenta = null; // cuenta seleccionada en extracto
 
 function setAhorroView(mode) {
   ahorroViewMode = mode;
   const btnB = document.getElementById('aho-view-bolsas');
   const btnC = document.getElementById('aho-view-cuentas');
-  if (btnB) {
-    btnB.style.background = mode==='bolsas' ? 'var(--accent-dark)' : 'transparent';
-    btnB.style.color      = mode==='bolsas' ? '#fff' : 'var(--text2)';
-    btnC.style.background = mode==='cuentas' ? 'var(--accent-dark)' : 'transparent';
-    btnC.style.color      = mode==='cuentas' ? '#fff' : 'var(--text2)';
-  }
+  const btnE = document.getElementById('aho-view-extracto');
+  [['bolsas',btnB],['cuentas',btnC],['extracto',btnE]].forEach(([m,btn]) => {
+    if (!btn) return;
+    btn.style.background = mode===m ? 'var(--accent-dark)' : 'transparent';
+    btn.style.color      = mode===m ? '#fff' : 'var(--text2)';
+    btn.style.fontWeight = mode===m ? '600' : '500';
+  });
   renderAhorroMovimientos();
+}
+
+function renderMovsExtracto(el, movs) {
+  // Selector de cuenta
+  const cuentas = ahorroData.cuentas || [];
+  if (!ahorroExtractoCuenta && cuentas.length) ahorroExtractoCuenta = cuentas[0].label;
+
+  const selector = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      ${cuentas.map(c => `
+        <button onclick="ahorroExtractoCuenta='${c.label}';renderAhorroMovimientos()"
+          style="padding:6px 14px;border-radius:20px;border:1px solid ${ahorroExtractoCuenta===c.label?'var(--accent-dark)':'var(--border)'};
+          background:${ahorroExtractoCuenta===c.label?'var(--accent-dark)':'transparent'};
+          color:${ahorroExtractoCuenta===c.label?'#fff':'var(--text2)'};font-size:12px;font-weight:600;cursor:pointer">
+          ${c.emoji} ${c.label}
+        </button>`).join('')}
+    </div>`;
+
+  // Filtrar movimientos de la cuenta seleccionada, ordenados por fecha desc
+  const movsCC = movs
+    .filter(m => m.cuenta === ahorroExtractoCuenta)
+    .sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+
+  const cuenta = cuentas.find(c => c.label === ahorroExtractoCuenta);
+  const saldoActual = cuenta?.saldo ?? 0;
+
+  if (!movsCC.length) {
+    el.innerHTML = selector + '<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px">Sin movimientos para esta cuenta</div>';
+    return;
+  }
+
+  // Calcular saldo acumulado hacia atrás (saldo actual - sum de movimientos más recientes)
+  let saldo = saldoActual;
+  const filas = movsCC.map(m => {
+    const fila = { ...m, saldoTras: saldo };
+    saldo -= m.importe;
+    return fila;
+  });
+
+  el.innerHTML = selector + `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:80px 1fr 90px 90px;padding:8px 14px;background:var(--bg3);border-bottom:1px solid var(--border)">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3)">Fecha</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3)">Concepto</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3);text-align:right">Importe</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3);text-align:right">Saldo</div>
+      </div>
+      ${filas.map((m,i) => `
+        <div style="display:grid;grid-template-columns:80px 1fr 90px 90px;padding:9px 14px;border-bottom:1px solid var(--border);${i%2===0?'background:var(--bg3)':''};align-items:center">
+          <div style="font-size:11px;color:var(--text3)">${m.fecha||'—'}</div>
+          <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px">
+            ${m.concepto}${m.bolsa&&m.bolsa!=='Todas'?` <span style="font-size:10px;color:var(--text3)">[${m.bolsa}]</span>`:''}
+          </div>
+          <div style="font-size:12px;font-weight:700;text-align:right;color:${m.importe>=0?'var(--accent)':'var(--red)'}">
+            ${m.importe>=0?'+':'-'}${fmt(Math.abs(m.importe))}
+          </div>
+          <div style="font-size:12px;font-weight:700;text-align:right;color:${m.saldoTras>=0?'var(--text1)':'var(--red)'}">
+            ${fmt(m.saldoTras)}
+          </div>
+        </div>`).join('')}
+    </div>`;
 }
 
 function renderAhorroMovimientos() {
@@ -3479,6 +3546,8 @@ function renderAhorroMovimientos() {
 
   if (ahorroViewMode === 'bolsas') {
     renderMovsBolsas(el, movs);
+  } else if (ahorroViewMode === 'extracto') {
+    renderMovsExtracto(el, movs);
   } else {
     renderMovsCuentas(el, movs);
   }
