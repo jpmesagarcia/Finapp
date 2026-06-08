@@ -3575,6 +3575,12 @@ function renderMovsBolsas(el, movs) {
     const grpId = 'aho-grp-' + bolsaId;
     const div = document.createElement('div');
     div.style.cssText = 'border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;background:var(--card)';
+    const bolsaDef = ahorroData.bolsas.find(b=>b.id===bolsaId);
+    const saldoActualBolsa = bolsaDef?.saldo ?? 0;
+    const sumMovsBolsa = g.items.reduce((s,m)=>s+m.importe, 0);
+    const saldoInicialBolsa = saldoActualBolsa - sumMovsBolsa;
+    const fechaMinimaBolsa = g.items.reduce((min,m)=>(!min||m.fecha<min)?m.fecha:min, null);
+
     div.innerHTML = `
       <div onclick="toggleAhorroBolsaGroup('${grpId}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;background:var(--bg3)">
         <div style="display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px">
@@ -3598,6 +3604,12 @@ function renderMovsBolsas(el, movs) {
             </div>
             <span style="font-size:14px;color:var(--text3);cursor:pointer" onclick="event.stopPropagation();editAhorroMov(${m.id})">✏️</span>
           </div>`).join('')}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:2px dashed var(--border);background:rgba(0,0,0,0.03)">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text3)">📍 Saldo inicial · ${fechaMinimaBolsa||'—'}</div>
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--text2)">${fmt(saldoInicialBolsa)}</div>
       </div>`;
     el.appendChild(div);
   });
@@ -3726,17 +3738,18 @@ function renderMovsCuentas(el, movs) {
   sorted.forEach(cuentaId => {
     const g = groups[cuentaId];
     const last10 = g.items.slice(0,10);
+    // Calcular saldo inicial
+    const cuentaDef = ahorroData.cuentas.find(c=>c.id===cuentaId);
+    const saldoActual = cuentaDef?.saldo ?? 0;
+    const sumMovs = g.items.reduce((s,m)=>s+m.importe, 0);
+    const saldoInicial = saldoActual - sumMovs;
+    const fechaMinima = g.items.reduce((min,m)=>(!min||m.fecha<min)?m.fecha:min, null);
+
     const col = document.createElement('div');
     col.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden';
-    col.innerHTML = `
-      <div style="padding:12px 14px;background:var(--bg3);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)">
-        <span style="font-size:18px">${g.emoji}</span>
-        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">${g.label}</span>
-        <span style="font-size:10px;color:var(--text3);margin-left:auto">últimos ${last10.length}</span>
-      </div>
-      ${last10.length === 0
-        ? '<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3)">Sin movimientos</div>'
-        : last10.map(m=>`
+    const filasSaldo = last10.length === 0
+      ? '<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3)">Sin movimientos</div>'
+      : last10.map(m=>`
           <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border)">
             <div style="min-width:0;flex:1">
               <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.concepto}</div>
@@ -3746,7 +3759,23 @@ function renderMovsCuentas(el, movs) {
               ${m.importe>=0?'+':'-'}${fmt(Math.abs(m.importe))}
             </div>
             <span style="font-size:12px;color:var(--text3);cursor:pointer;flex-shrink:0" onclick="editAhorroMov(${m.id})">✏️</span>
-          </div>`).join('')}`;
+          </div>`).join('');
+    col.innerHTML = `
+      <div style="padding:12px 14px;background:var(--bg3);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)">
+        <span style="font-size:18px">${g.emoji}</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">${g.label}</span>
+        <span style="font-size:10px;color:var(--text3);margin-left:auto">últimos ${last10.length}</span>
+      </div>
+      ${filasSaldo}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:rgba(0,0,0,0.03);border-top:2px dashed var(--border)">
+        <div style="min-width:0;flex:1">
+          <div style="font-size:12px;font-weight:600;color:var(--text3)">📍 Saldo inicial</div>
+          <div style="font-size:10px;color:var(--text3)">${fechaMinima||'—'}</div>
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;flex-shrink:0;margin-left:8px;color:var(--text2)">
+          ${fmt(saldoInicial)}
+        </div>
+      </div>`;
     grid.appendChild(col);
   });
 
