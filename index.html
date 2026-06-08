@@ -973,17 +973,13 @@ svg.ring { transform: rotate(-90deg); }
         <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px">📋 Movimientos</div>
         <div style="display:flex;gap:8px;align-items:center">
           <div style="display:flex;background:var(--bg3);border-radius:10px;padding:3px;gap:3px">
-            <button id="aho-view-bolsas" onclick="setAhorroView('bolsas')"
-              style="padding:6px 12px;border-radius:8px;border:none;background:var(--accent-dark);color:#fff;font-size:12px;font-weight:600;cursor:pointer">
-              🪣 Por bolsa
-            </button>
             <button id="aho-view-cuentas" onclick="setAhorroView('cuentas')"
-              style="padding:6px 12px;border-radius:8px;border:none;background:transparent;color:var(--text2);font-size:12px;font-weight:500;cursor:pointer">
+              style="padding:6px 12px;border-radius:8px;border:none;background:var(--accent-dark);color:#fff;font-size:12px;font-weight:600;cursor:pointer">
               💳 Por cuenta
             </button>
-            <button id="aho-view-extracto" onclick="setAhorroView('extracto')"
+            <button id="aho-view-bolsas" onclick="setAhorroView('bolsas')"
               style="padding:6px 12px;border-radius:8px;border:none;background:transparent;color:var(--text2);font-size:12px;font-weight:500;cursor:pointer">
-              📄 Extracto
+              🪣 Por bolsa
             </button>
           </div>
           <button onclick="openAhorroModal()" style="padding:7px 13px;border-radius:var(--radius-sm);border:none;background:var(--accent-dark);color:#fff;font-size:13px;font-weight:600;cursor:pointer">+ Añadir</button>
@@ -3457,70 +3453,86 @@ function renderAhorroBolsas() {
   }
 }
 
-let ahorroViewMode = 'bolsas'; // 'bolsas' | 'cuentas' | 'extracto'
-let ahorroExtractoCuenta = null; // cuenta seleccionada en extracto
+let ahorroViewMode = 'cuentas'; // 'cuentas' | 'bolsas'
+let ahorroExtractoCuenta = null;
+let ahorroExtractoBolsa  = null;
 
 function setAhorroView(mode) {
   ahorroViewMode = mode;
-  const btnB = document.getElementById('aho-view-bolsas');
   const btnC = document.getElementById('aho-view-cuentas');
-  const btnE = document.getElementById('aho-view-extracto');
-  [['bolsas',btnB],['cuentas',btnC],['extracto',btnE]].forEach(([m,btn]) => {
-    if (!btn) return;
-    btn.style.background = mode===m ? 'var(--accent-dark)' : 'transparent';
-    btn.style.color      = mode===m ? '#fff' : 'var(--text2)';
-    btn.style.fontWeight = mode===m ? '600' : '500';
-  });
+  const btnB = document.getElementById('aho-view-bolsas');
+  if (btnC) {
+    btnC.style.background = mode==='cuentas' ? 'var(--accent-dark)' : 'transparent';
+    btnC.style.color      = mode==='cuentas' ? '#fff' : 'var(--text2)';
+    btnC.style.fontWeight = mode==='cuentas' ? '600' : '500';
+    btnB.style.background = mode==='bolsas'  ? 'var(--accent-dark)' : 'transparent';
+    btnB.style.color      = mode==='bolsas'  ? '#fff' : 'var(--text2)';
+    btnB.style.fontWeight = mode==='bolsas'  ? '600' : '500';
+  }
   renderAhorroMovimientos();
 }
 
-function renderMovsExtracto(el, movs) {
-  // Selector de cuenta
+function renderAhorroMovimientos() {
+  const el = document.getElementById('ahorro-movimientos');
+  if (!el) return;
+  const movs = [...(ahorroData.movimientos||[])]
+    .filter(m => !m.concepto?.includes('Saldo inicial establecido'))
+    .sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+
+  if (ahorroViewMode === 'bolsas') renderExtractoBolsa(el, movs);
+  else renderExtractoCuenta(el, movs);
+}
+
+// ── Extracto por cuenta ───────────────────────────────────────
+function renderExtractoCuenta(el, movs) {
   const cuentas = ahorroData.cuentas || [];
   if (!ahorroExtractoCuenta && cuentas.length) ahorroExtractoCuenta = cuentas[0].label;
 
-  const selector = `
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-      ${cuentas.map(c => `
-        <button onclick="ahorroExtractoCuenta='${c.label}';renderAhorroMovimientos()"
-          style="padding:6px 14px;border-radius:20px;border:1px solid ${ahorroExtractoCuenta===c.label?'var(--accent-dark)':'var(--border)'};
-          background:${ahorroExtractoCuenta===c.label?'var(--accent-dark)':'transparent'};
-          color:${ahorroExtractoCuenta===c.label?'#fff':'var(--text2)'};font-size:12px;font-weight:600;cursor:pointer">
-          ${c.emoji} ${c.label}
-        </button>`).join('')}
-    </div>`;
-
-  // Filtrar movimientos de la cuenta seleccionada, ordenados por fecha desc
-  const movsCC = movs
-    .filter(m => m.cuenta === ahorroExtractoCuenta)
-    .sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+  const selector = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+    ${cuentas.map(c => `
+      <button onclick="ahorroExtractoCuenta='${c.label}';renderAhorroMovimientos()"
+        style="padding:6px 14px;border-radius:20px;border:1px solid ${ahorroExtractoCuenta===c.label?'var(--accent-dark)':'var(--border)'};
+        background:${ahorroExtractoCuenta===c.label?'var(--accent-dark)':'transparent'};
+        color:${ahorroExtractoCuenta===c.label?'#fff':'var(--text2)'};font-size:12px;font-weight:600;cursor:pointer">
+        ${c.emoji} ${c.label}
+      </button>`).join('')}
+  </div>`;
 
   const cuenta = cuentas.find(c => c.label === ahorroExtractoCuenta);
+  const movsCC = movs.filter(m => m.cuenta === ahorroExtractoCuenta);
   const saldoActual = cuenta?.saldo ?? 0;
+  const saldoInicial = saldoActual - movsCC.reduce((s,m)=>s+m.importe, 0);
+  const fechaMin = movsCC.length ? movsCC[movsCC.length-1].fecha : null;
 
   if (!movsCC.length) {
-    el.innerHTML = selector + '<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px">Sin movimientos para esta cuenta</div>';
+    el.innerHTML = selector + `
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:rgba(0,0,0,0.03);border-top:2px dashed var(--border)">
+          <div style="font-size:12px;font-weight:600;color:var(--text3)">📍 Saldo inicial · —</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text2)">${fmt(saldoInicial)}</div>
+        </div>
+      </div>`;
     return;
   }
 
-  // Calcular saldo acumulado hacia atrás (saldo actual - sum de movimientos más recientes)
+  // Saldo acumulado hacia atrás
   let saldo = saldoActual;
   const filas = movsCC.map(m => {
-    const fila = { ...m, saldoTras: saldo };
+    const f = { ...m, saldoTras: saldo };
     saldo -= m.importe;
-    return fila;
+    return f;
   });
 
   el.innerHTML = selector + `
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden">
-      <div style="display:grid;grid-template-columns:80px 1fr 90px 90px;padding:8px 14px;background:var(--bg3);border-bottom:1px solid var(--border)">
+      <div style="display:grid;grid-template-columns:90px 1fr 90px 90px;padding:8px 14px;background:var(--bg3);border-bottom:1px solid var(--border)">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3)">Fecha</div>
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3)">Concepto</div>
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3);text-align:right">Importe</div>
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3);text-align:right">Saldo</div>
       </div>
       ${filas.map((m,i) => `
-        <div style="display:grid;grid-template-columns:80px 1fr 90px 90px;padding:9px 14px;border-bottom:1px solid var(--border);${i%2===0?'background:var(--bg3)':''};align-items:center">
+        <div style="display:grid;grid-template-columns:90px 1fr 90px 90px;padding:9px 14px;border-bottom:1px solid var(--border);${i%2===0?'background:var(--bg3)':''};align-items:center" onclick="editAhorroMov(${m.id})" class="mov-item" style="cursor:pointer">
           <div style="font-size:11px;color:var(--text3)">${m.fecha||'—'}</div>
           <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px">
             ${m.concepto}${m.bolsa&&m.bolsa!=='Todas'?` <span style="font-size:10px;color:var(--text3)">[${m.bolsa}]</span>`:''}
@@ -3532,87 +3544,82 @@ function renderMovsExtracto(el, movs) {
             ${fmt(m.saldoTras)}
           </div>
         </div>`).join('')}
+      <div style="display:grid;grid-template-columns:90px 1fr 90px 90px;padding:10px 14px;background:rgba(0,0,0,0.03);border-top:2px dashed var(--border);align-items:center">
+        <div style="font-size:11px;color:var(--text3)">${fechaMin||'—'}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text3)">📍 Saldo inicial</div>
+        <div></div>
+        <div style="font-size:12px;font-weight:700;text-align:right;color:var(--text2)">${fmt(saldoInicial)}</div>
+      </div>
     </div>`;
 }
 
-function renderAhorroMovimientos() {
-  const el = document.getElementById('ahorro-movimientos');
-  if (!el) return;
-  const movs = [...(ahorroData.movimientos||[])].sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
-  if (!movs.length) {
-    el.innerHTML = '<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px">Sin movimientos — usa + Añadir o importa desde la pestaña Importar</div>';
+// ── Extracto por bolsa ────────────────────────────────────────
+function renderExtractoBolsa(el, movs) {
+  const bolsas = ahorroData.bolsas || [];
+  if (!ahorroExtractoBolsa && bolsas.length) ahorroExtractoBolsa = bolsas[0].label;
+
+  const selector = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+    ${bolsas.map(b => `
+      <button onclick="ahorroExtractoBolsa='${b.label}';renderAhorroMovimientos()"
+        style="padding:6px 14px;border-radius:20px;border:1px solid ${ahorroExtractoBolsa===b.label?'var(--accent-dark)':'var(--border)'};
+        background:${ahorroExtractoBolsa===b.label?'var(--accent-dark)':'transparent'};
+        color:${ahorroExtractoBolsa===b.label?'#fff':'var(--text2)'};font-size:12px;font-weight:600;cursor:pointer">
+        ${b.emoji} ${b.label}
+      </button>`).join('')}
+  </div>`;
+
+  const bolsa = bolsas.find(b => b.label === ahorroExtractoBolsa);
+  const movsB = movs.filter(m => m.bolsa === ahorroExtractoBolsa);
+  const saldoActual = bolsa?.saldo ?? 0;
+  const saldoInicial = saldoActual - movsB.reduce((s,m)=>s+m.importe, 0);
+  const fechaMin = movsB.length ? movsB[movsB.length-1].fecha : null;
+
+  if (!movsB.length) {
+    el.innerHTML = selector + `
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:rgba(0,0,0,0.03);border-top:2px dashed var(--border)">
+          <div style="font-size:12px;font-weight:600;color:var(--text3)">📍 Saldo inicial · —</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text2)">${fmt(saldoInicial)}</div>
+        </div>
+      </div>`;
     return;
   }
 
-  if (ahorroViewMode === 'bolsas') {
-    renderMovsBolsas(el, movs);
-  } else if (ahorroViewMode === 'extracto') {
-    renderMovsExtracto(el, movs);
-  } else {
-    renderMovsCuentas(el, movs);
-  }
-}
-
-function renderMovsBolsas(el, movs) {
-  // Group by bolsa
-  const BOLSA_ORDER = ['ahorro_puro','lourdes','anual','pilates'];
-  const groups = {};
-  movs.forEach(m => {
-    // Match by label to id
-    const bolsaId = ahorroData.bolsas.find(b => b.label === m.bolsa)?.id || 'otros';
-    if (!groups[bolsaId]) groups[bolsaId] = {label:m.bolsa||'Sin bolsa', emoji: ahorroData.bolsas.find(b=>b.id===bolsaId)?.emoji || '📦', items:[], total:0};
-    groups[bolsaId].items.push(m);
-    groups[bolsaId].total += m.importe;
+  let saldo = saldoActual;
+  const filas = movsB.map(m => {
+    const f = { ...m, saldoTras: saldo };
+    saldo -= m.importe;
+    return f;
   });
 
-  // Sort by BOLSA_ORDER
-  const sorted = [...BOLSA_ORDER.filter(id=>groups[id]), ...Object.keys(groups).filter(id=>!BOLSA_ORDER.includes(id))];
-
-  el.innerHTML = '';
-  sorted.forEach(bolsaId => {
-    const g = groups[bolsaId];
-    const isOpen = bolsaId === 'hipoteca_casa';
-    const grpId = 'aho-grp-' + bolsaId;
-    const div = document.createElement('div');
-    div.style.cssText = 'border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;background:var(--card)';
-    const bolsaDef = ahorroData.bolsas.find(b=>b.id===bolsaId);
-    const saldoActualBolsa = bolsaDef?.saldo ?? 0;
-    const sumMovsBolsa = g.items.reduce((s,m)=>s+m.importe, 0);
-    const saldoInicialBolsa = saldoActualBolsa - sumMovsBolsa;
-    const fechaMinimaBolsa = g.items.reduce((min,m)=>(!min||m.fecha<min)?m.fecha:min, null);
-
-    div.innerHTML = `
-      <div onclick="toggleAhorroBolsaGroup('${grpId}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;background:var(--bg3)">
-        <div style="display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px">
-          <span style="font-size:18px">${g.emoji}</span>
-          <span>${g.label}</span>
-          <span style="font-size:11px;color:var(--text3);font-weight:400">${g.items.length} mov.</span>
-        </div>
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:${g.total>=0?'var(--accent)':'var(--red)'}">
-          ${g.total>=0?'+':'-'}${fmt(Math.abs(g.total))}
-        </div>
+  el.innerHTML = selector + `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:90px 1fr 90px 90px;padding:8px 14px;background:var(--bg3);border-bottom:1px solid var(--border)">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3)">Fecha</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3)">Concepto</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3);text-align:right">Importe</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3);text-align:right">Saldo</div>
       </div>
-      <div id="${grpId}" style="display:${isOpen?'block':'none'}">
-        ${g.items.map(m=>`
-          <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid var(--border)" onclick="editAhorroMov(${m.id})" style="cursor:pointer">
-            <div style="flex:1">
-              <div style="font-size:13px;font-weight:500">${m.concepto}</div>
-              <div style="font-size:10px;color:var(--text3);margin-top:2px">${m.fecha||''} · ${m.cuenta||''}</div>
-            </div>
-            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:${m.importe>=0?'var(--accent)':'var(--red)'}">
-              ${m.importe>=0?'+':'-'}${fmt(Math.abs(m.importe))}
-            </div>
-            <span style="font-size:14px;color:var(--text3);cursor:pointer" onclick="event.stopPropagation();editAhorroMov(${m.id})">✏️</span>
-          </div>`).join('')}
+      ${filas.map((m,i) => `
+        <div style="display:grid;grid-template-columns:90px 1fr 90px 90px;padding:9px 14px;border-bottom:1px solid var(--border);${i%2===0?'background:var(--bg3)':''};align-items:center" onclick="editAhorroMov(${m.id})" class="mov-item" style="cursor:pointer">
+          <div style="font-size:11px;color:var(--text3)">${m.fecha||'—'}</div>
+          <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px">
+            ${m.concepto}${m.cuenta&&m.cuenta!=='Todas'?` <span style="font-size:10px;color:var(--text3)">[${m.cuenta}]</span>`:''}
+          </div>
+          <div style="font-size:12px;font-weight:700;text-align:right;color:${m.importe>=0?'var(--accent)':'var(--red)'}">
+            ${m.importe>=0?'+':'-'}${fmt(Math.abs(m.importe))}
+          </div>
+          <div style="font-size:12px;font-weight:700;text-align:right;color:${m.saldoTras>=0?'var(--text1)':'var(--red)'}">
+            ${fmt(m.saldoTras)}
+          </div>
+        </div>`).join('')}
+      <div style="display:grid;grid-template-columns:90px 1fr 90px 90px;padding:10px 14px;background:rgba(0,0,0,0.03);border-top:2px dashed var(--border);align-items:center">
+        <div style="font-size:11px;color:var(--text3)">${fechaMin||'—'}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text3)">📍 Saldo inicial</div>
+        <div></div>
+        <div style="font-size:12px;font-weight:700;text-align:right;color:var(--text2)">${fmt(saldoInicial)}</div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:2px dashed var(--border);background:rgba(0,0,0,0.03)">
-        <div>
-          <div style="font-size:12px;font-weight:600;color:var(--text3)">📍 Saldo inicial · ${fechaMinimaBolsa||'—'}</div>
-        </div>
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--text2)">${fmt(saldoInicialBolsa)}</div>
-      </div>`;
-    el.appendChild(div);
-  });
+    </div>`;
 }
 
 function editAhorroMov(movId) {
@@ -3705,82 +3712,6 @@ function deleteAhorroMov(idx, m) {
   renderAhorro();
   renderDashboard();
   toast('✓ Movimiento eliminado');
-}
-
-function toggleAhorroBolsaGroup(id) {
-  const el = document.getElementById(id);
-  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-}
-
-function renderMovsCuentas(el, movs) {
-  // 3-column grid, last 10 movs per physical account
-  const CUENTAS_ORDER = ['caixa_ahorro','bankinter','cajamar_disponible','cajamar_capital','efectivo_aho'];
-  const groups = {};
-
-  movs.forEach(m => {
-    const cuentaId = (ahorroData.cuentas.find(c => c.id === m.cuenta) || ahorroData.cuentas.find(c => c.label === m.cuenta))?.id || 'otros';
-    if (!groups[cuentaId]) {
-      const cuentaDef = ahorroData.cuentas.find(c=>c.id===cuentaId);
-      groups[cuentaId] = {label:m.cuenta||'Sin cuenta', emoji:cuentaDef?.emoji||'🏦', items:[]};
-    }
-    groups[cuentaId].items.push(m);
-  });
-
-  const sorted = [...CUENTAS_ORDER.filter(id=>groups[id]), ...Object.keys(groups).filter(id=>!CUENTAS_ORDER.includes(id))];
-  if (!sorted.length) { el.innerHTML='<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px">Sin movimientos</div>'; return; }
-
-  const grid = document.createElement('div');
-  grid.style.cssText = 'display:grid;grid-template-columns:1fr;gap:12px';
-  // Responsive: 3 cols on wide screens
-  if (window.innerWidth >= 900) grid.style.gridTemplateColumns = '1fr 1fr 1fr';
-  else if (window.innerWidth >= 600) grid.style.gridTemplateColumns = '1fr 1fr';
-
-  sorted.forEach(cuentaId => {
-    const g = groups[cuentaId];
-    const last10 = g.items.slice(0,10);
-    // Calcular saldo inicial
-    const cuentaDef = ahorroData.cuentas.find(c=>c.id===cuentaId);
-    const saldoActual = cuentaDef?.saldo ?? 0;
-    const sumMovs = g.items.reduce((s,m)=>s+m.importe, 0);
-    const saldoInicial = saldoActual - sumMovs;
-    const fechaMinima = g.items.reduce((min,m)=>(!min||m.fecha<min)?m.fecha:min, null);
-
-    const col = document.createElement('div');
-    col.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden';
-    const filasSaldo = last10.length === 0
-      ? '<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3)">Sin movimientos</div>'
-      : last10.map(m=>`
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border)">
-            <div style="min-width:0;flex:1">
-              <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.concepto}</div>
-              <div style="font-size:10px;color:var(--text3)">${m.fecha||''}</div>
-            </div>
-            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;flex-shrink:0;margin-left:8px;color:${m.importe>=0?'var(--accent)':'var(--red)'}">
-              ${m.importe>=0?'+':'-'}${fmt(Math.abs(m.importe))}
-            </div>
-            <span style="font-size:12px;color:var(--text3);cursor:pointer;flex-shrink:0" onclick="editAhorroMov(${m.id})">✏️</span>
-          </div>`).join('');
-    col.innerHTML = `
-      <div style="padding:12px 14px;background:var(--bg3);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)">
-        <span style="font-size:18px">${g.emoji}</span>
-        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">${g.label}</span>
-        <span style="font-size:10px;color:var(--text3);margin-left:auto">últimos ${last10.length}</span>
-      </div>
-      ${filasSaldo}
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:rgba(0,0,0,0.03);border-top:2px dashed var(--border)">
-        <div style="min-width:0;flex:1">
-          <div style="font-size:12px;font-weight:600;color:var(--text3)">📍 Saldo inicial</div>
-          <div style="font-size:10px;color:var(--text3)">${fechaMinima||'—'}</div>
-        </div>
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;flex-shrink:0;margin-left:8px;color:var(--text2)">
-          ${fmt(saldoInicial)}
-        </div>
-      </div>`;
-    grid.appendChild(col);
-  });
-
-  el.innerHTML = '';
-  el.appendChild(grid);
 }
 
 // ── Edit cuenta saldo inline ──────────────────────────────────
