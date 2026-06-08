@@ -2026,15 +2026,18 @@ function parseCSV(file) {
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true});
         importBuffer = [];
-        // selectedBank puede ser un banco de ahorro si se usó ese importador antes
-        // En parseCSV solo usamos los parsers normales
-        const bankNormal = ['caixabank','bankinter','cajamar'].includes(selectedBank) ? selectedBank : 'caixabank';
-        if (bankNormal === 'caixabank') {
+        if (selectedBank === 'caixabank_ahorro') {
+          parseCaixaBankAhorro(rows);
+        } else if (selectedBank === 'bankinter_ahorro') {
+          parseBankinterAhorro(rows);
+        } else if (selectedBank === 'caixabank') {
           parseCaixaBankRows(rows);
-        } else if (bankNormal === 'cajamar') {
+        } else if (selectedBank === 'cajamar') {
           parseCajamarRows(rows);
-        } else if (bankNormal === 'bankinter') {
+        } else if (selectedBank === 'bankinter') {
           parseBankinterRows(rows);
+        } else {
+          parseBankinterRows(rows); // fallback
         }
         showImportPreview();
       } catch(err) { toast('Error leyendo Excel: ' + err.message); }
@@ -2759,6 +2762,13 @@ function renderPresupuesto() {
   fijosLines.forEach(line => {
     editRow(line.emoji, line.label, line.importe, val => { saveFijosLine(mes, line.id, val); updateBudSummary(mes); renderDashboard(); });
   });
+  // Subtotal fijos
+  const subtotalFijEl = document.createElement('div');
+  subtotalFijEl.id = 'bud-subtotal-fijos';
+  subtotalFijEl.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 4px 4px;border-top:1px solid var(--border);margin-top:4px';
+  subtotalFijEl.innerHTML = `<span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">Total fijos</span>
+    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--text2)">${fmt(totalFijos)}</span>`;
+  listFij.appendChild(subtotalFijEl);
 
   // Switch to right column for variables on desktop
   list = listVar;
@@ -2791,6 +2801,16 @@ function renderPresupuesto() {
         title="Eliminar categoría">×</button>`;
     list.appendChild(row);
   });
+
+  // Subtotal variables
+  const hiddenCatsMes2 = (budgets[mes] && budgets[mes].hiddenCats) || [];
+  const totalVarBuiltin2 = CATS.filter(c => !FIJOS_CATS.includes(c) && c !== 'Fijos').reduce((s,c) => s+(catBud[c]||0), 0);
+  const totalVarCustom2  = customCats.filter(cc => !hiddenCatsMes2.includes(cc.label)).reduce((s,cc) => s+((budgets[mes]?.cats?.[cc.label])||cc.importe||0), 0);
+  const subtotalVarEl = document.createElement('div');
+  subtotalVarEl.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 4px 4px;border-top:1px solid var(--border);margin-top:4px';
+  subtotalVarEl.innerHTML = `<span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">Total variables</span>
+    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--text2)">${fmt(totalVarBuiltin2 + totalVarCustom2)}</span>`;
+  listVar.appendChild(subtotalVarEl);
 
   // Add new category button
   const addCatBtn = document.createElement('button');
