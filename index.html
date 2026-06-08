@@ -2762,12 +2762,13 @@ function renderPresupuesto() {
   fijosLines.forEach(line => {
     editRow(line.emoji, line.label, line.importe, val => { saveFijosLine(mes, line.id, val); updateBudSummary(mes); renderDashboard(); });
   });
-  // Subtotal fijos
+  // Subtotal fijos — calculado desde fijosLines que ya tiene los overrides del mes
   const subtotalFijEl = document.createElement('div');
   subtotalFijEl.id = 'bud-subtotal-fijos';
-  subtotalFijEl.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 4px 4px;border-top:1px solid var(--border);margin-top:4px';
+  subtotalFijEl.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 4px 4px;border-top:2px solid var(--border);margin-top:6px';
+  const _totalFijos = fijosLines.reduce((s,l) => s + l.importe, 0);
   subtotalFijEl.innerHTML = `<span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">Total fijos</span>
-    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--text2)">${fmt(totalFijos)}</span>`;
+    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--text2)">${fmt(_totalFijos)}</span>`;
   listFij.appendChild(subtotalFijEl);
 
   // Switch to right column for variables on desktop
@@ -2802,14 +2803,14 @@ function renderPresupuesto() {
     list.appendChild(row);
   });
 
-  // Subtotal variables
-  const hiddenCatsMes2 = (budgets[mes] && budgets[mes].hiddenCats) || [];
-  const totalVarBuiltin2 = CATS.filter(c => !FIJOS_CATS.includes(c) && c !== 'Fijos').reduce((s,c) => s+(catBud[c]||0), 0);
-  const totalVarCustom2  = customCats.filter(cc => !hiddenCatsMes2.includes(cc.label)).reduce((s,cc) => s+((budgets[mes]?.cats?.[cc.label])||cc.importe||0), 0);
+  // Subtotal variables — calculado en el sitio desde catBud y customCats visibles
+  const _hiddenCats = (budgets[mes] && budgets[mes].hiddenCats) || [];
+  const _totalVarBuiltin = CATS.filter(c => !FIJOS_CATS.includes(c) && c !== 'Fijos').reduce((s,c) => s+(catBud[c]||0), 0);
+  const _totalVarCustom  = customCats.filter(cc => !_hiddenCats.includes(cc.label)).reduce((s,cc) => s+((budgets[mes]?.cats?.[cc.label]) ?? cc.importe ?? 0), 0);
   const subtotalVarEl = document.createElement('div');
-  subtotalVarEl.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 4px 4px;border-top:1px solid var(--border);margin-top:4px';
+  subtotalVarEl.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 4px 4px;border-top:2px solid var(--border);margin-top:6px';
   subtotalVarEl.innerHTML = `<span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">Total variables</span>
-    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--text2)">${fmt(totalVarBuiltin2 + totalVarCustom2)}</span>`;
+    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--text2)">${fmt(_totalVarBuiltin + _totalVarCustom)}</span>`;
   listVar.appendChild(subtotalVarEl);
 
   // Add new category button
