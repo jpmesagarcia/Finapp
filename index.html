@@ -2026,18 +2026,15 @@ function parseCSV(file) {
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true});
         importBuffer = [];
-        if (selectedBank === 'caixabank_ahorro') {
-          parseCaixaBankAhorro(rows);
-        } else if (selectedBank === 'bankinter_ahorro') {
-          parseBankinterAhorro(rows);
-        } else if (selectedBank === 'caixabank') {
+        // selectedBank puede ser un banco de ahorro si se usó ese importador antes
+        // En parseCSV solo usamos los parsers normales
+        const bankNormal = ['caixabank','bankinter','cajamar'].includes(selectedBank) ? selectedBank : 'caixabank';
+        if (bankNormal === 'caixabank') {
           parseCaixaBankRows(rows);
-        } else if (selectedBank === 'cajamar') {
+        } else if (bankNormal === 'cajamar') {
           parseCajamarRows(rows);
-        } else if (selectedBank === 'bankinter') {
+        } else if (bankNormal === 'bankinter') {
           parseBankinterRows(rows);
-        } else {
-          parseBankinterRows(rows); // fallback
         }
         showImportPreview();
       } catch(err) { toast('Error leyendo Excel: ' + err.message); }
