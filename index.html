@@ -1236,9 +1236,9 @@ const _MONTH_SHORT_ES = ['Ene','Feb','Mar','Abr','May','Jun',
   }
 })();
 const INCOME_CATS = ['Nómina','Variable Lucía','Atocha','Pisos Cristina','Ayuda niños','Adelantos','Otros ingresos'];
-const CATS = ['Comida','Transporte','Niños','Gasolina','Gastos casa','Luz','Agua','Vida social','Hipoteca+Coche','Colegio','Seguros','Fijos','Maritza','Adelantos','Otros'];
-const CAT_EMOJI = {Comida:'🛒',Transporte:'🚌',Niños:'👶',Gasolina:'⛽','Gastos casa':'🏠',Luz:'💡',Agua:'💧','Vida social':'🎉',"Hipoteca+Coche":'🏦',Colegio:'🎓',Seguros:'🛡️',Comunidad:'🏘️',Fijos:'📋',Maritza:'👩',Adelantos:'💸',Otros:'📦',Ingreso:'💰','Ajuste efectivo':'⚖️'};
-const CAT_COLORS = {Comida:'#00d4aa',Transporte:'#0099ff',Niños:'#ff9f43',Gasolina:'#ff6b6b','Gastos casa':'#a29bfe',Luz:'#ffd32a',Agua:'#74b9ff','Vida social':'#fd79a8',"Hipoteca+Coche":'#e84393',Colegio:'#6c5ce7',Seguros:'#00cec9',Comunidad:'#fdcb6e',Fijos:'#636e72',Maritza:'#fd79a8',Adelantos:'#f4b23b',Otros:'#b2bec3'};
+const CATS = ['Comida','Transporte','Niños','Gasolina','Gastos casa','Luz','Agua','Vida social','Hipoteca+Coche','Colegio','Seguros','Fijos','Maritza','Teléfono','Adelantos','Otros'];
+const CAT_EMOJI = {Comida:'🛒',Transporte:'🚌',Niños:'👶',Gasolina:'⛽','Gastos casa':'🏠',Luz:'💡',Agua:'💧','Vida social':'🎉',"Hipoteca+Coche":'🏦',Colegio:'🎓',Seguros:'🛡️',Comunidad:'🏘️',Fijos:'📋',Maritza:'👩','Teléfono':'📱',Adelantos:'💸',Otros:'📦',Ingreso:'💰','Ajuste efectivo':'⚖️'};
+const CAT_COLORS = {Comida:'#00d4aa',Transporte:'#0099ff',Niños:'#ff9f43',Gasolina:'#ff6b6b','Gastos casa':'#a29bfe',Luz:'#ffd32a',Agua:'#74b9ff','Vida social':'#fd79a8',"Hipoteca+Coche":'#e84393',Colegio:'#6c5ce7',Seguros:'#00cec9',Comunidad:'#fdcb6e',Fijos:'#636e72',Maritza:'#fd79a8','Teléfono':'#a29bfe',Adelantos:'#f4b23b',Otros:'#b2bec3'};
 // Income lines for budget (editable per month)
 const DEFAULT_INCOME_LINES = [
   {id:'nomina',    label:'Nómina familia',   emoji:'💼', importe:5340},
@@ -3471,7 +3471,7 @@ function setAhorroView(mode) {
 function renderAhorroMovimientos() {
   const el = document.getElementById('ahorro-movimientos');
   if (!el) return;
-  const movs = [...(ahorroData.movimientos||[])].reverse();
+  const movs = [...(ahorroData.movimientos||[])].sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
   if (!movs.length) {
     el.innerHTML = '<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px">Sin movimientos — usa + Añadir o importa desde la pestaña Importar</div>';
     return;
