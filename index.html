@@ -1271,7 +1271,7 @@ const _MONTH_SHORT_ES = ['Ene','Feb','Mar','Abr','May','Jun',
   }
 })();
 const INCOME_CATS = ['Nómina','Variable Lucía','Atocha','Pisos Cristina','Ayuda niños','Adelantos','Otros ingresos'];
-const CATS = ['Comida','Transporte','Niños','Gasolina','Gastos casa','Luz','Agua','Vida social','Hipoteca+Coche','Colegio','Seguros','Fijos','Maritza','Teléfono','Adelantos','Otros'];
+const CATS = ['Comida','Transporte','Niños','Gasolina','Gastos casa','Luz','Agua','Vida social','Hipoteca+Coche','Colegio','Seguros','Fijos','Maritza','Teléfono','Comunidad','Adelantos','Otros'];
 const CAT_EMOJI = {Comida:'🛒',Transporte:'🚌',Niños:'👶',Gasolina:'⛽','Gastos casa':'🏠',Luz:'💡',Agua:'💧','Vida social':'🎉',"Hipoteca+Coche":'🏦',Colegio:'🎓',Seguros:'🛡️',Comunidad:'🏘️',Fijos:'📋',Maritza:'👩','Teléfono':'📱',Adelantos:'💸',Otros:'📦',Ingreso:'💰','Ajuste efectivo':'⚖️'};
 const CAT_COLORS = {Comida:'#00d4aa',Transporte:'#0099ff',Niños:'#ff9f43',Gasolina:'#ff6b6b','Gastos casa':'#a29bfe',Luz:'#ffd32a',Agua:'#74b9ff','Vida social':'#fd79a8',"Hipoteca+Coche":'#e84393',Colegio:'#6c5ce7',Seguros:'#00cec9',Comunidad:'#fdcb6e',Fijos:'#636e72',Maritza:'#fd79a8','Teléfono':'#a29bfe',Adelantos:'#f4b23b',Otros:'#b2bec3'};
 // Income lines for budget (editable per month)
@@ -1660,7 +1660,10 @@ function renderDashboard() {
   incLinesPrev.forEach(line => {
     const catN = ingCatMapPrev[line.id] || line.label;
     const recibido = mData.filter(d=>d.tipo==='ingreso'&&(d.categoria===catN||d.categoria===line.label)).reduce((s,d)=>s+d.importe,0);
-    const resta = Math.max(0, line.importe - recibido);
+    // Para saldo anterior negativo: no usar Math.max, permitir que reste del cierre
+    const resta = line.importe < 0
+      ? line.importe - recibido  // negativo: resta del cierre directamente
+      : Math.max(0, line.importe - recibido);
     pendienteDeIngreso += resta;
   });
 
