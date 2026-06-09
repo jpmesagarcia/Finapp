@@ -242,6 +242,41 @@ svg.ring { transform: rotate(-90deg); }
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .filter-chip.active { background: var(--accent-dark); border-color: var(--accent-dark); color: #ffffff; }
+
+/* ── Popover previsión ── */
+.prevision-popover {
+  position: fixed; z-index: 999;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  min-width: 260px; max-width: 320px;
+  font-size: 12px;
+}
+.prevision-popover-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 0; border-bottom: 1px solid var(--border);
+}
+.prevision-popover-row:last-child { border-bottom: none; }
+.prevision-popover-total {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0 2px; margin-top: 4px; border-top: 2px solid var(--border);
+  font-weight: 800; font-family: 'Syne', sans-serif;
+}
+
+/* ── Adelantos ── */
+.adelanto-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.adelanto-item.saldado { opacity: 0.45; }
+.adelanto-saldar-btn {
+  font-size: 11px; font-weight: 700; padding: 4px 10px;
+  border-radius: 12px; border: 1px solid var(--accent-dark);
+  background: transparent; color: var(--accent-dark); cursor: pointer; flex-shrink: 0;
+}
+.adelanto-saldar-btn:hover { background: var(--accent-dark); color: #fff; }
 .mov-filter-select {
   height: 32px; border-radius: 20px; border: 1px solid var(--border);
   background: var(--card); color: var(--text2); font-size: 12px; font-family: 'DM Sans',sans-serif;
@@ -714,9 +749,9 @@ svg.ring { transform: rotate(-90deg); }
             <div class="kpi-label">Efectivo</div>
             <div class="kpi-value" id="kpi-efectivo-dash" style="font-size:14px">—</div>
           </div>
-          <div class="kpi-card" style="padding:12px 14px">
+          <div class="kpi-card" style="padding:12px 14px;cursor:pointer;position:relative" onclick="togglePrevisionDesglose()" id="kpi-card-prevision" title="Ver desglose">
             <div class="kpi-icon" style="font-size:16px">🐷</div>
-            <div class="kpi-label">Previsión cierre</div>
+            <div class="kpi-label">Previsión cierre <span style="font-size:9px;color:var(--text3)">ⓘ</span></div>
             <div class="kpi-value" id="kpi-proyeccion" style="font-size:14px">—</div>
           </div>
           <div class="kpi-card" style="padding:12px 14px">
@@ -1446,6 +1481,51 @@ function nextMonth() {
 // ─── RENDER DASHBOARD ────────────────────────────────────────
 let dashVigilancia = false;
 
+function togglePrevisionDesglose() {
+  const existing = document.getElementById('prevision-popover');
+  if (existing) { existing.remove(); return; }
+  const d = window._previsionDesglose;
+  if (!d) return;
+  const pop = document.createElement('div');
+  pop.id = 'prevision-popover';
+  pop.className = 'prevision-popover';
+  pop.innerHTML = `
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;margin-bottom:10px">🐷 Cómo se calcula</div>
+    <div class="prevision-popover-row">
+      <span style="color:var(--text2)">Balance actual</span>
+      <span style="font-weight:700;color:${d.balanceActual>=0?'var(--accent)':'var(--red)'}">${d.balanceActual>=0?'+':'-'}${fmt(Math.abs(d.balanceActual))}</span>
+    </div>
+    <div class="prevision-popover-row">
+      <span style="color:var(--text2)">+ Ingresos pendientes</span>
+      <span style="font-weight:700;color:var(--accent)">+${fmt(d.pendienteDeIngreso)}</span>
+    </div>
+    <div class="prevision-popover-row">
+      <span style="color:var(--text2)">− Gastos pendientes</span>
+      <span style="font-weight:700;color:var(--red)">-${fmt(d.pendientePorGastar)}</span>
+    </div>
+    <div class="prevision-popover-total">
+      <span>Previsión cierre</span>
+      <span style="color:${d.previsionCierre>=0?'var(--accent)':'var(--red)'}">${d.previsionCierre>=0?'+':'-'}${fmt(Math.abs(d.previsionCierre))}</span>
+    </div>
+    <div style="font-size:10px;color:var(--text3);margin-top:8px;line-height:1.4">
+      Balance actual = ingresos reales − gastos reales<br>
+      Ingresos pendientes = lo que falta por ingresar según presupuesto<br>
+      Gastos pendientes = lo que falta por gastar según presupuesto
+    </div>`;
+  const card = document.getElementById('kpi-card-prevision');
+  const rect = card.getBoundingClientRect();
+  pop.style.top  = (rect.bottom + 8 + window.scrollY) + 'px';
+  pop.style.left = Math.max(8, rect.left - 60) + 'px';
+  document.body.appendChild(pop);
+  setTimeout(() => {
+    document.addEventListener('click', function handler(e) {
+      if (!pop.contains(e.target) && e.target.id !== 'kpi-card-prevision') {
+        pop.remove(); document.removeEventListener('click', handler);
+      }
+    });
+  }, 100);
+}
+
 function toggleVigilancia() {
   dashVigilancia = !dashVigilancia;
   const btn = document.getElementById('dash-vigilancia-btn');
@@ -1584,10 +1664,8 @@ function renderDashboard() {
     pendienteDeIngreso += resta;
   });
 
-  // Previsión = balance actual + ingresos pendientes - gastos pendientes
-  // Con 0 movimientos → ingr.pendiente = total presup ingresos, gastos pendiente = total presup gastos
-  // → previsión = margen del presupuesto ✓
   const previsionCierre = balanceActual + pendienteDeIngreso - pendientePorGastar;
+  window._previsionDesglose = { balanceActual, pendienteDeIngreso, pendientePorGastar, previsionCierre };
   const projEl = document.getElementById('kpi-proyeccion');
   if (projEl) {
     projEl.textContent = (previsionCierre >= 0 ? '+' : '-') + fmt(Math.abs(previsionCierre));
@@ -2026,18 +2104,13 @@ function parseCSV(file) {
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true});
         importBuffer = [];
-        if (selectedBank === 'caixabank_ahorro') {
-          parseCaixaBankAhorro(rows);
-        } else if (selectedBank === 'bankinter_ahorro') {
-          parseBankinterAhorro(rows);
-        } else if (selectedBank === 'caixabank') {
+        const bankNormal = ['caixabank','bankinter','cajamar'].includes(selectedBank) ? selectedBank : 'caixabank';
+        if (bankNormal === 'caixabank') {
           parseCaixaBankRows(rows);
-        } else if (selectedBank === 'cajamar') {
+        } else if (bankNormal === 'cajamar') {
           parseCajamarRows(rows);
-        } else if (selectedBank === 'bankinter') {
+        } else if (bankNormal === 'bankinter') {
           parseBankinterRows(rows);
-        } else {
-          parseBankinterRows(rows); // fallback
         }
         showImportPreview();
       } catch(err) { toast('Error leyendo Excel: ' + err.message); }
@@ -2689,7 +2762,7 @@ function renderPresupuesto() {
     inp.step = '1';
     inp.style.cssText = 'width:88px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:"Syne",sans-serif;font-size:14px;font-weight:700;padding:7px 10px;text-align:right;outline:none;-webkit-appearance:none';
     inp.addEventListener('focus', () => { inp.style.borderColor='var(--accent)'; inp.select(); });
-    inp.addEventListener('blur',  () => { inp.style.borderColor='var(--border)'; onSave(parseFloat(inp.value)||0); });
+    inp.addEventListener('blur',  () => { inp.style.borderColor='var(--border)'; const v = parseFloat(inp.value); onSave(isNaN(v) ? 0 : v); });
     inp.addEventListener('keydown', e => { if(e.key==='Enter') inp.blur(); });
     const emojiEl = document.createElement('span');
     emojiEl.style.cssText = 'font-size:18px;width:24px;text-align:center;flex-shrink:0';
@@ -2762,9 +2835,7 @@ function renderPresupuesto() {
   fijosLines.forEach(line => {
     editRow(line.emoji, line.label, line.importe, val => { saveFijosLine(mes, line.id, val); updateBudSummary(mes); renderDashboard(); });
   });
-  // Subtotal fijos — calculado desde fijosLines que ya tiene los overrides del mes
   const subtotalFijEl = document.createElement('div');
-  subtotalFijEl.id = 'bud-subtotal-fijos';
   subtotalFijEl.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 4px 4px;border-top:2px solid var(--border);margin-top:6px';
   const _totalFijos = fijosLines.reduce((s,l) => s + l.importe, 0);
   subtotalFijEl.innerHTML = `<span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">Total fijos</span>
@@ -2802,8 +2873,6 @@ function renderPresupuesto() {
         title="Eliminar categoría">×</button>`;
     list.appendChild(row);
   });
-
-  // Subtotal variables — calculado en el sitio desde catBud y customCats visibles
   const _hiddenCats = (budgets[mes] && budgets[mes].hiddenCats) || [];
   const _totalVarBuiltin = CATS.filter(c => !FIJOS_CATS.includes(c) && c !== 'Fijos').reduce((s,c) => s+(catBud[c]||0), 0);
   const _totalVarCustom  = customCats.filter(cc => !_hiddenCats.includes(cc.label)).reduce((s,cc) => s+((budgets[mes]?.cats?.[cc.label]) ?? cc.importe ?? 0), 0);
@@ -3069,13 +3138,27 @@ function saveNewCat() {
   const emoji = document.getElementById('newcat-emoji').value.trim() || '📦';
   const importe = parseFloat(document.getElementById('newcat-importe').value) || 0;
   if (!label) { toast('Escribe un nombre para la categoría'); return; }
+
+  // Si la cat existe en customCats pero está oculta en este mes → reactivar
+  const existingCat = customCats.find(c => c.label === label);
+  const hiddenCatsMes = (budgets[budMonth] && budgets[budMonth].hiddenCats) || [];
+  if (existingCat && hiddenCatsMes.includes(label)) {
+    budgets[budMonth].hiddenCats = hiddenCatsMes.filter(c => c !== label);
+    if (importe > 0) saveBudgetCat(budMonth, label, importe);
+    saveBudgets();
+    closeNewCatModal();
+    renderPresupuesto();
+    renderDashboard();
+    toast('✓ Categoría "' + label + '" recuperada');
+    return;
+  }
+
   if (CATS.includes(label) || customCats.some(c=>c.label===label)) {
     toast('Esa categoría ya existe'); return;
   }
   const id = 'custom_' + Date.now();
   customCats.push({id, label, emoji, importe});
   saveCustomCats();
-  // Save budget for current month
   if (importe > 0) saveBudgetCat(budMonth, label, importe);
   closeNewCatModal();
   renderPresupuesto();
