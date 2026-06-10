@@ -3028,37 +3028,33 @@ function saveBudInicioMes(mes) {
   budgets[mes].income['saldo_ant'] = total;
   saveBudgets();
 
-  // ── Opción A: crear/actualizar movimiento de ajuste real ──
-  // El movimiento tiene un concepto especial para poder identificarlo y actualizarlo
-  const INICIO_CONCEPTO = '📍 Saldo inicial · ' + mes;
+  // ── Opción A: crear/actualizar movimientos de ajuste reales ──
+  const CONCEPTO_BANCO    = '📍 Saldo inicial banco · ' + mes;
+  const CONCEPTO_EFECTIVO = '📍 Saldo inicial efectivo · ' + mes;
 
-  // Buscar si ya existe un movimiento de este mes con ese concepto
-  const existing = data.findIndex(d => d.mes === mes && d.concepto === INICIO_CONCEPTO && d.tipo === 'ajuste');
+  const fechaMov = (window._MONTH_KEY_MAP
+    ? Object.entries(window._MONTH_KEY_MAP).find(([,v])=>v===mes)?.[0] + '-01'
+    : null) || new Date().toISOString().split('T')[0];
 
-  if (total === 0) {
-    // Si el total es 0, eliminar el movimiento si existía
-    if (existing >= 0) data.splice(existing, 1);
-  } else {
-    const mov = {
-      id: existing >= 0 ? data[existing].id : nextId++,
-      fecha: mes === currentMonth
-        ? new Date().toISOString().split('T')[0]
-        : (window._MONTH_KEY_MAP
-            ? Object.entries(window._MONTH_KEY_MAP).find(([,v])=>v===mes)?.[0] + '-01'
-            : null) || new Date().toISOString().split('T')[0],
-      mes,
-      concepto: INICIO_CONCEPTO,
-      categoria: 'Ajuste efectivo',
-      importe: total,
-      tipo: 'ajuste',
-      cuenta: 'banco',
-    };
-    if (existing >= 0) {
-      data[existing] = mov;
-    } else {
-      data.push(mov);
+  // Helper para upsert
+  function upsertInicioMov(concepto, importe, cuenta) {
+    const idx = data.findIndex(d => d.mes === mes && d.concepto === concepto && d.tipo === 'ajuste');
+    if (importe === 0) {
+      if (idx >= 0) data.splice(idx, 1);
+      return;
     }
+    const mov = {
+      id: idx >= 0 ? data[idx].id : nextId++,
+      fecha: fechaMov, mes, concepto,
+      categoria: 'Ajuste efectivo',
+      importe: Math.round(importe * 100) / 100,
+      tipo: 'ajuste', cuenta,
+    };
+    if (idx >= 0) data[idx] = mov; else data.push(mov);
   }
+
+  upsertInicioMov(CONCEPTO_BANCO,    banco,    'banco');
+  upsertInicioMov(CONCEPTO_EFECTIVO, efectivo, 'efectivo');
 
   saveData();
   renderPresupuesto();
