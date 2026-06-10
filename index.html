@@ -3018,15 +3018,52 @@ function updateBudInicioTotal() {
 function saveBudInicioMes(mes) {
   const banco    = parseFloat(document.getElementById('bud-inicio-banco')?.value) || 0;
   const efectivo = parseFloat(document.getElementById('bud-inicio-efectivo')?.value) || 0;
-  const total    = banco + efectivo;
+  const total    = Math.round((banco + efectivo) * 100) / 100;
+
+  // ── Guardar en presupuesto ──
   if (!budgets[mes]) budgets[mes] = {};
   budgets[mes].inicioMes = { banco, efectivo };
   budgets[mes].inicioMesCollapsed = true;
   if (!budgets[mes].income) budgets[mes].income = {};
-  budgets[mes].income['saldo_ant'] = Math.round(total * 100) / 100;
+  budgets[mes].income['saldo_ant'] = total;
   saveBudgets();
+
+  // ── Opción A: crear/actualizar movimiento de ajuste real ──
+  // El movimiento tiene un concepto especial para poder identificarlo y actualizarlo
+  const INICIO_CONCEPTO = '📍 Saldo inicial · ' + mes;
+
+  // Buscar si ya existe un movimiento de este mes con ese concepto
+  const existing = data.findIndex(d => d.mes === mes && d.concepto === INICIO_CONCEPTO && d.tipo === 'ajuste');
+
+  if (total === 0) {
+    // Si el total es 0, eliminar el movimiento si existía
+    if (existing >= 0) data.splice(existing, 1);
+  } else {
+    const mov = {
+      id: existing >= 0 ? data[existing].id : nextId++,
+      fecha: mes === currentMonth
+        ? new Date().toISOString().split('T')[0]
+        : (window._MONTH_KEY_MAP
+            ? Object.entries(window._MONTH_KEY_MAP).find(([,v])=>v===mes)?.[0] + '-01'
+            : null) || new Date().toISOString().split('T')[0],
+      mes,
+      concepto: INICIO_CONCEPTO,
+      categoria: 'Ajuste efectivo',
+      importe: total,
+      tipo: 'ajuste',
+      cuenta: 'banco',
+    };
+    if (existing >= 0) {
+      data[existing] = mov;
+    } else {
+      data.push(mov);
+    }
+  }
+
+  saveData();
   renderPresupuesto();
   renderDashboard();
+  renderMovimientos();
   toast('✓ Saldo inicial guardado');
 }
 
