@@ -1093,49 +1093,41 @@ svg.ring { transform: rotate(-90deg); }
 <!-- ── MODAL ADELANTOS ── -->
 <!-- ── MODAL TRANSFERENCIA AHORRO ── -->
 <div class="overlay" id="transfer-overlay" onclick="closeTransferModal(event)" style="display:none">
-  <div class="modal" onclick="event.stopPropagation()" style="max-width:500px;padding:24px 20px;max-height:88vh;overflow-y:auto">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:380px;padding:24px 20px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px">↔️ Movimiento compuesto</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px">↔️ Reasignar bolsas</div>
       <button onclick="closeTransferModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
     </div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:16px">Añade las líneas que necesites. Cada una crea un apunte en ahorro.</div>
-
-    <div style="margin-bottom:12px">
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Concepto general</div>
-      <input id="transfer-concepto" type="text" placeholder="Ej: Pago efectivo Pilates"
-        style="width:100%;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);font-size:13px;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:16px">Mueve saldo entre bolsas sin tocar cuentas reales.</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">De bolsa</div>
+        <select id="transfer-desde" style="width:100%;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg3);font-size:13px;box-sizing:border-box"></select>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">A bolsa</div>
+        <select id="transfer-hasta" style="width:100%;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg3);font-size:13px;box-sizing:border-box"></select>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Importe (acepta fórmulas)</div>
+        <input id="transfer-importe" type="text" placeholder="Ej: 500 o 200+300"
+          style="width:100%;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);font-size:15px;font-family:'Syne',sans-serif;font-weight:700;box-sizing:border-box;text-align:right">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Concepto (opcional)</div>
+        <input id="transfer-concepto" type="text" placeholder="Ej: Reasignación ahorro"
+          style="width:100%;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);font-size:13px;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Fecha</div>
+        <input id="transfer-fecha" type="date"
+          style="width:100%;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);font-size:13px;box-sizing:border-box">
+      </div>
+      <button onclick="saveTransfer()"
+        style="width:100%;padding:13px;border-radius:var(--radius-sm);border:none;background:var(--accent-dark);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px">
+        Reasignar
+      </button>
     </div>
-    <div style="margin-bottom:12px">
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Fecha</div>
-      <input id="transfer-fecha" type="date"
-        style="width:100%;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);font-size:13px;box-sizing:border-box;font-family:'DM Sans',sans-serif">
-    </div>
-
-    <!-- Cabecera tabla -->
-    <div style="display:grid;grid-template-columns:70px 1fr 1fr 90px 28px;gap:6px;padding:4px 0;margin-bottom:4px">
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">±</div>
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Cuenta</div>
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Bolsa</div>
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;text-align:right">Importe</div>
-      <div></div>
-    </div>
-    <div id="transfer-lines"></div>
-
-    <button onclick="addTransferLine()"
-      style="width:100%;padding:8px;border-radius:var(--radius-sm);border:1px dashed var(--border);background:transparent;color:var(--text3);font-size:12px;cursor:pointer;margin-top:6px">
-      + Añadir línea
-    </button>
-
-    <!-- Resumen -->
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;margin-top:10px;border-top:1px solid var(--border)">
-      <span style="font-size:12px;color:var(--text3)">Total neto</span>
-      <span id="transfer-total" style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--text3)">0,00 €</span>
-    </div>
-
-    <button onclick="saveTransfer()"
-      style="width:100%;padding:13px;border-radius:var(--radius-sm);border:none;background:var(--accent-dark);color:#fff;font-size:14px;font-weight:700;cursor:pointer">
-      Guardar movimiento
-    </button>
   </div>
 </div>
 
@@ -4165,21 +4157,20 @@ function editAhorroBolsa(id) {
 }
 
 // ── Add movement modal ────────────────────────────────────────
-// ─── MOVIMIENTO COMPUESTO (TRANSFERENCIAS) ───────────────────
-let _transferLineCount = 0;
-
+// ─── REASIGNACIÓN ENTRE BOLSAS ───────────────────────────────
 function openTransferModal() {
-  _transferLineCount = 0;
+  const bolsas = ahorroData.bolsas || [];
+  const opts = bolsas.map(b => `<option value="${b.label}">${b.emoji} ${b.label} (${fmt(b.saldo)})</option>`).join('');
+  document.getElementById('transfer-desde').innerHTML = opts;
+  document.getElementById('transfer-hasta').innerHTML = opts;
+  if (bolsas.length > 1) document.getElementById('transfer-hasta').selectedIndex = 1;
+  document.getElementById('transfer-importe').value = '';
   document.getElementById('transfer-concepto').value = '';
   document.getElementById('transfer-fecha').value = new Date().toISOString().split('T')[0];
-  document.getElementById('transfer-lines').innerHTML = '';
-  // Añadir dos líneas por defecto
-  addTransferLine();
-  addTransferLine();
-  updateTransferTotal();
   const ov = document.getElementById('transfer-overlay');
   ov.style.display = 'flex';
   setTimeout(() => ov.classList.add('open'), 10);
+  document.getElementById('transfer-importe').focus();
 }
 
 function closeTransferModal(e) {
@@ -4189,114 +4180,45 @@ function closeTransferModal(e) {
   setTimeout(() => { ov.style.display = 'none'; }, 200);
 }
 
-function addTransferLine() {
-  const idx = _transferLineCount++;
-  const cuentas = ahorroData.cuentas || [];
-  const bolsas  = ahorroData.bolsas  || [];
-
-  const cuentaOpts = cuentas.map(c => `<option value="${c.label}">${c.emoji} ${c.label}</option>`).join('');
-  const bolsaOpts  = bolsas.map(b  => `<option value="${b.label}">${b.emoji} ${b.label}</option>`).join('');
-
-  const row = document.createElement('div');
-  row.id = `tl-${idx}`;
-  row.style.cssText = 'display:grid;grid-template-columns:70px 1fr 1fr 90px 28px;gap:6px;margin-bottom:6px;align-items:center';
-  row.innerHTML = `
-    <select id="tl-sign-${idx}" onchange="updateTransferTotal()"
-      style="padding:6px 4px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);font-size:12px;font-weight:700;text-align:center">
-      <option value="-">− Salida</option>
-      <option value="+">+ Entrada</option>
-    </select>
-    <select id="tl-cuenta-${idx}"
-      style="padding:6px 4px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);font-size:12px">
-      ${cuentaOpts}
-    </select>
-    <select id="tl-bolsa-${idx}"
-      style="padding:6px 4px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);font-size:12px">
-      ${bolsaOpts}
-    </select>
-    <input type="text" id="tl-importe-${idx}" placeholder="0" value=""
-      oninput="updateTransferTotal()"
-      style="padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);
-      font-family:'Syne',sans-serif;font-weight:700;font-size:13px;text-align:right;width:100%;box-sizing:border-box">
-    <button onclick="removeTransferLine(${idx})"
-      style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:0;line-height:1">×</button>`;
-  document.getElementById('transfer-lines').appendChild(row);
-}
-
-function removeTransferLine(idx) {
-  const el = document.getElementById(`tl-${idx}`);
-  if (el) el.remove();
-  updateTransferTotal();
-}
-
-function updateTransferTotal() {
-  let total = 0;
-  for (let i = 0; i < _transferLineCount; i++) {
-    const signEl   = document.getElementById(`tl-sign-${i}`);
-    const importeEl = document.getElementById(`tl-importe-${i}`);
-    if (!signEl || !importeEl) continue;
-    const val = evalFormula(importeEl.value || '0');
-    total += signEl.value === '+' ? val : -val;
-  }
-  const totalEl = document.getElementById('transfer-total');
-  if (totalEl) {
-    totalEl.textContent = (total >= 0 ? '+' : '') + fmt(total);
-    totalEl.style.color = Math.abs(total) < 0.01 ? 'var(--accent)' : 'var(--orange)';
-  }
-}
-
 function saveTransfer() {
-  const concepto = document.getElementById('transfer-concepto').value.trim() || 'Movimiento compuesto';
-  const fecha    = document.getElementById('transfer-fecha').value || new Date().toISOString().split('T')[0];
-  const groupId  = 'grp_' + Date.now();
+  const desde   = document.getElementById('transfer-desde').value;
+  const hasta   = document.getElementById('transfer-hasta').value;
+  const importe = evalFormula(document.getElementById('transfer-importe').value || '0');
+  const concepto = document.getElementById('transfer-concepto').value.trim() || `Reasignación ${desde} → ${hasta}`;
+  const fecha   = document.getElementById('transfer-fecha').value || new Date().toISOString().split('T')[0];
 
-  const lines = [];
-  for (let i = 0; i < _transferLineCount; i++) {
-    const signEl    = document.getElementById(`tl-sign-${i}`);
-    const cuentaEl  = document.getElementById(`tl-cuenta-${i}`);
-    const bolsaEl   = document.getElementById(`tl-bolsa-${i}`);
-    const importeEl = document.getElementById(`tl-importe-${i}`);
-    if (!signEl) continue; // línea eliminada
-    const val = evalFormula(importeEl.value || '0');
-    if (val === 0) continue; // ignorar líneas vacías
-    lines.push({
-      sign:    signEl.value,
-      cuenta:  cuentaEl.value,
-      bolsa:   bolsaEl.value,
-      importe: val,
-    });
-  }
+  if (desde === hasta) { toast('⚠️ Las bolsas de origen y destino son la misma'); return; }
+  if (!importe || importe <= 0) { toast('⚠️ Indica un importe válido'); return; }
 
-  if (!lines.length) { toast('⚠️ Añade al menos una línea con importe'); return; }
+  const bolsaDesde = ahorroData.bolsas.find(b => b.label === desde);
+  const bolsaHasta = ahorroData.bolsas.find(b => b.label === hasta);
+  if (!bolsaDesde || !bolsaHasta) { toast('⚠️ Bolsa no encontrada'); return; }
 
-  lines.forEach(l => {
-    const importe = l.sign === '+' ? l.importe : -l.importe;
-    const cuenta  = ahorroData.cuentas.find(c => c.label === l.cuenta);
-    const bolsa   = ahorroData.bolsas.find(b  => b.label === l.bolsa);
+  const groupId = 'grp_' + Date.now();
 
-    // Crear movimiento
-    const mov = {
-      id:       Date.now() + Math.random(),
-      fecha,
-      concepto: concepto + (lines.length > 1 ? ` (${l.sign === '+' ? 'entrada' : 'salida'} ${l.bolsa})` : ''),
-      cuenta:   l.cuenta,
-      bolsa:    l.bolsa,
-      importe,
-      emoji:    bolsa?.emoji || '📦',
-      groupId,
-    };
-    ahorroData.movimientos.push(mov);
-
-    // Actualizar saldos
-    if (cuenta) cuenta.saldo = Math.round((cuenta.saldo + importe) * 100) / 100;
-    if (bolsa)  bolsa.saldo  = Math.round((bolsa.saldo  + importe) * 100) / 100;
+  // Movimiento salida
+  ahorroData.movimientos.push({
+    id: Date.now() + Math.random(),
+    fecha, concepto: concepto + ' (salida)',
+    cuenta: 'Reasignación', bolsa: desde,
+    importe: -importe, emoji: bolsaDesde.emoji, groupId,
   });
+  bolsaDesde.saldo = Math.round((bolsaDesde.saldo - importe) * 100) / 100;
+
+  // Movimiento entrada
+  ahorroData.movimientos.push({
+    id: Date.now() + Math.random(),
+    fecha, concepto: concepto + ' (entrada)',
+    cuenta: 'Reasignación', bolsa: hasta,
+    importe: importe, emoji: bolsaHasta.emoji, groupId,
+  });
+  bolsaHasta.saldo = Math.round((bolsaHasta.saldo + importe) * 100) / 100;
 
   saveAhorro();
   closeTransferModal();
   renderAhorro();
   renderDashboard();
-  toast(`✓ ${lines.length} movimientos creados`);
+  toast(`✓ ${fmt(importe)} reasignados de ${desde} a ${hasta}`);
 }
 
 function openAhorroModal() {
