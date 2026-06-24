@@ -3793,19 +3793,13 @@ async function syncToSheets() {
   setSyncStatus('⏳ Guardando en Google Sheets...');
   try {
     const payload = {
-      movimientos: data,
-      budgets,
-      customCats,
-      customIncomeLines,
-      efectivo: efectivoBalance,
-      ahorro: ahorroData,
+      movimientos: data, budgets, customCats, customIncomeLines,
+      efectivo: efectivoBalance, ahorro: ahorroData,
       updatedAt: new Date().toISOString()
     };
-    const res = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-      headers: { 'Content-Type': 'text/plain' } // Apps Script needs text/plain for CORS
-    });
+    // Usamos GET con ?action=save para evitar el problema de CORS con POST
+    const encoded = encodeURIComponent(JSON.stringify(payload));
+    const res = await fetch(url + '?action=save&data=' + encoded);
     const json = await res.json();
     if (json.ok) {
       setSyncStatus('✅ Guardado en Google Sheets — ' + new Date().toLocaleTimeString('es-ES'), 'var(--accent)');
