@@ -1143,9 +1143,13 @@ svg.ring { transform: rotate(-90deg); }
     <!-- Sync -->
     <div class="settings-section">
       <div class="settings-section-title">☁️ Sincronización</div>
-      <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Apps Script</div>
-        <div style="font-size:12px;color:var(--accent);font-weight:600">✅ Google Sheets sincronizado</div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">URL Apps Script</div>
+        <div style="display:flex;gap:6px">
+          <input id="sync-url-input" type="text" placeholder="https://script.google.com/..."
+            style="flex:1;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);font-size:11px;background:var(--bg3);min-width:0">
+          <button onclick="saveApiUrlFromInput()" style="padding:8px 12px;border-radius:var(--radius-sm);border:none;background:var(--accent-dark);color:#fff;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0">OK</button>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
         <button onclick="syncFromSheets()" style="padding:11px;border-radius:var(--radius-sm);border:1px solid var(--accent2);background:transparent;color:var(--accent2);font-size:13px;font-weight:600;cursor:pointer">⬇️ Descargar</button>
@@ -3226,9 +3230,20 @@ function descartarBorrador() {
   plan.draft=null; saveAnual(); renderAnual(); toast('Borrador descartado');
 }
 
+function saveApiUrlFromInput() {
+  const val = document.getElementById('sync-url-input')?.value?.trim();
+  if (!val) { toast('⚠️ Introduce una URL válida'); return; }
+  saveApiUrl(val);
+  toast('✓ URL guardada');
+  setSyncStatus('✅ URL actualizada', 'var(--accent)');
+}
+
 function openSettings() {
   document.getElementById('settings-drawer').classList.add('open');
   document.getElementById('settings-overlay').classList.add('open');
+  // Cargar URL actual en el campo
+  const inp = document.getElementById('sync-url-input');
+  if (inp) inp.value = getApiUrl();
 }
 function closeSettings() {
   document.getElementById('settings-drawer').classList.remove('open');
@@ -3731,9 +3746,12 @@ function resetBudgetMonth() {
 }
 
 // ─── GOOGLE SHEETS SYNC ──────────────────────────────────────
-const API_URL = 'https://script.google.com/macros/s/AKfycbzDfL4aUw89qYj0A8ItdH1c6WOkWO1YoadHESHv_N4VTDJotj3t-zmZb1FWTzOce2m-/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbySQe7G0Xn5hFHoZMkW6K9TkzOht3gD5kVz7EBUOnUomm-xMMJqTdo6F-XgBg6iw0cD/exec';
 function getApiUrl() {
-  return API_URL;
+  return localStorage.getItem('finanzas_api_url') || API_URL;
+}
+function saveApiUrl(url) {
+  localStorage.setItem('finanzas_api_url', url.trim());
 }
 function setSyncStatus(msg, color='var(--text3)') {
   const el = document.getElementById('sync-status');
