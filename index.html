@@ -3460,7 +3460,7 @@ function renderPresupuesto() {
     inp.step = '1';
     inp.style.cssText = 'width:88px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:"Syne",sans-serif;font-size:14px;font-weight:700;padding:7px 10px;text-align:right;outline:none;-webkit-appearance:none';
     inp.addEventListener('focus', () => { inp.style.borderColor='var(--accent)'; inp.select(); });
-    inp.addEventListener('blur',  () => { inp.style.borderColor='var(--border)'; const v = parseFloat(inp.value); onSave(isNaN(v) ? 0 : v); });
+    inp.addEventListener('blur',  () => { inp.style.borderColor='var(--border)'; const v = evalFormula(inp.value); inp.value = v; onSave(v); });
     inp.addEventListener('keydown', e => { if(e.key==='Enter') inp.blur(); });
     const emojiEl = document.createElement('span');
     emojiEl.style.cssText = 'font-size:18px;width:24px;text-align:center;flex-shrink:0';
@@ -3551,7 +3551,7 @@ function renderPresupuesto() {
                padding:7px 10px;text-align:right;outline:none;-webkit-appearance:none"
         onfocus="this.style.borderColor='var(--accent)';this.select()"
         onblur="this.style.borderColor='var(--border)'"
-        onchange="saveBudgetCat('${mes}','${cc.label}',parseFloat(this.value)||0);updateBudSummary('${mes}');renderDashboard()"
+        onchange="saveBudgetCat('${mes}','${cc.label}',evalFormula(this.value)||0);updateBudSummary('${mes}');renderDashboard()"
         onkeydown="if(event.key==='Enter')this.blur()">
       <span style="font-size:12px;color:var(--text3);flex-shrink:0">€/mes</span>
       <button onclick="hideCustomCatForMonth('${cc.id}','${mes}')"
@@ -3624,20 +3624,26 @@ function renderBudInicioMes(mes) {
   const inicio = budgets[mes]?.inicioMes;
   const configured = inicio && (inicio.banco !== undefined);
 
-  // Si no está configurado, sugerir del mes anterior
-  let sugBanco = 0, sugEfectivo = efectivoBalance;
+  // Si ya está en edición abierta y tiene valores en los inputs, no resetear
+  const bancoCampo = document.getElementById('bud-inicio-banco');
+  const efectivoCampo = document.getElementById('bud-inicio-efectivo');
+  if (configured && !budgets[mes]?.inicioMesCollapsed && bancoCampo && efectivoCampo) return;
+
+  // Si no está configurado, sugerir del balance del mes anterior
+  let sugBanco = 0, sugEfectivo = 0;
   if (!configured) {
     const mesIdx = MONTHS.indexOf(mes);
     if (mesIdx > 0) {
       const mesPrev = MONTHS[mesIdx - 1];
-      const prevMovs = data.filter(d => d.mes === mesPrev && d.cuenta === 'banco');
-      sugBanco = Math.round(prevMovs.reduce((s,d) => s + d.importe, 0) * 100) / 100;
+      const prevMovs = data.filter(d => d.mes === mesPrev);
+      sugBanco    = Math.round(prevMovs.filter(d=>d.cuenta==='banco').reduce((s,d)=>s+d.importe,0)*100)/100;
+      sugEfectivo = Math.round(prevMovs.filter(d=>d.cuenta==='efectivo').reduce((s,d)=>s+d.importe,0)*100)/100;
     }
   }
 
-  const banco     = configured ? inicio.banco     : sugBanco;
-  const efectivo  = configured ? inicio.efectivo  : sugEfectivo;
-  const total     = banco + efectivo;
+  const banco    = configured ? inicio.banco    : sugBanco;
+  const efectivo = configured ? inicio.efectivo : sugEfectivo;
+  const total    = banco + efectivo;
   const collapsed = configured && budgets[mes]?.inicioMesCollapsed;
 
   if (collapsed) {
