@@ -3406,7 +3406,10 @@ function renderPresupuesto() {
   const fijosLines  = getFijosLines(mes);
   const catBud      = getBudget(mes);
   const FIJOS_CATS  = ['Hipoteca+Coche','Colegio','Seguros','Maritza'];
-  const varCatsList = [...CATS.filter(c => !FIJOS_CATS.includes(c) && c !== 'Fijos'), ...customCats.map(c=>c.label)];
+  const varCatsList = [
+    ...CATS.filter(c => !FIJOS_CATS.includes(c) && c !== 'Fijos'),
+    ...customCats.filter(cc => !CATS.includes(cc.label)).map(c=>c.label)
+  ];
 
   document.getElementById('bud-month-label').textContent =
     mes + ' ' + (MONTH_DATES[mes]?.split(' ')[1] || '');
