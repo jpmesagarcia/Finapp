@@ -1853,8 +1853,8 @@ function renderDashboard() {
     const resta = Math.max(0, bud - gastado);
     pendientePorGastar += resta;
   });
-  // Variables pendientes (categorías personalizadas)
-  customCats.forEach(cc => {
+  // Variables pendientes (categorías personalizadas — solo las que no son builtin)
+  customCats.filter(cc => !CATS.includes(cc.label)).forEach(cc => {
     const bud = (budgets[currentMonth]?.cats?.[cc.label]) ?? cc.importe ?? 0;
     const gastado = mData.filter(d=>d.categoria===cc.label && d.tipo==='gasto').reduce((s,d)=>s+Math.abs(d.importe),0);
     const resta = Math.max(0, bud - gastado);
@@ -1862,15 +1862,15 @@ function renderDashboard() {
   });
 
   // Ingresos pendientes de llegar (presupuestado - ya recibido)
-  const ingCatMapPrev = {nomina:'Nómina',variable:'Variable Lucía',atocha:'Atocha',cristina:'Pisos Cristina',ninos:'Ayuda niños',saldo_ant:'Saldo mes anterior'};
-  const incLinesPrev = getIncomeLines(currentMonth);
+  // Excluimos saldo_ant porque ya está incluido en balanceActual via movimientos de ajuste
+  const ingCatMapPrev = {nomina:'Nómina',variable:'Variable Lucía',atocha:'Atocha',cristina:'Pisos Cristina',ninos:'Ayuda niños'};
+  const incLinesPrev = getIncomeLines(currentMonth).filter(l => l.id !== 'saldo_ant');
   let pendienteDeIngreso = 0;
   incLinesPrev.forEach(line => {
     const catN = ingCatMapPrev[line.id] || line.label;
     const recibido = mData.filter(d=>d.tipo==='ingreso'&&(d.categoria===catN||d.categoria===line.label)).reduce((s,d)=>s+d.importe,0);
-    // Para saldo anterior negativo: no usar Math.max, permitir que reste del cierre
     const resta = line.importe < 0
-      ? line.importe - recibido  // negativo: resta del cierre directamente
+      ? line.importe - recibido
       : Math.max(0, line.importe - recibido);
     pendienteDeIngreso += resta;
   });
