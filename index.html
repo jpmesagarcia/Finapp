@@ -871,8 +871,8 @@ svg.ring { transform: rotate(-90deg); }
           <div class="efectivo-balance" id="efectivo-display" style="font-size:20px;margin-top:2px">—</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
-          <input class="adjust-input" type="number" id="efectivo-input" placeholder="Saldo real €" step="0.01" style="width:130px">
-          <button class="adjust-btn" onclick="adjustEfectivo()">Ajustar</button>
+          <input class="adjust-input" type="number" id="efectivo-input" placeholder="¿Cuánto tienes?" step="0.01" style="width:140px">
+          <button class="adjust-btn" onclick="adjustEfectivo()">Reconciliar</button>
         </div>
       </div>
       <!-- Selector de mes -->
@@ -2734,16 +2734,36 @@ function confirmImport() {
 function adjustEfectivo() {
   const val = parseFloat(document.getElementById('efectivo-input').value);
   if (isNaN(val)) { toast('Introduce un importe válido'); return; }
-  const diff = val - efectivoBalance;
-  efectivoBalance = val;
-  if (diff !== 0) {
-    data.push({ id: nextId++, fecha: new Date().toISOString().split('T')[0], mes: currentMonth, concepto: 'Ajuste de efectivo', categoria: 'Ajuste efectivo', importe: diff, tipo: 'ajuste', cuenta: 'efectivo' });
-  }
+
+  // Calcular efectivo actual del mes (suma de movimientos de efectivo)
+  const mData = data.filter(d => d.mes === currentMonth);
+  const efectivoMes = mData.filter(d => d.cuenta === 'efectivo').reduce((s,d) => s + d.importe, 0);
+
+  const diff = val - efectivoMes;
+  if (Math.abs(diff) < 0.01) { toast('El efectivo ya cuadra ✓'); return; }
+
+  // Crear apunte de ajuste
+  data.push({
+    id: nextId++,
+    fecha: new Date().toISOString().split('T')[0],
+    mes: currentMonth,
+    concepto: 'Ajuste de efectivo',
+    categoria: 'Ajuste efectivo',
+    importe: diff,
+    tipo: 'ajuste',
+    cuenta: 'efectivo'
+  });
+
+  // Actualizar efectivoBalance global para que el KPI cuadre
+  efectivoBalance += diff;
+  localStorage.setItem('finanzas_efectivo', efectivoBalance);
+
   saveData();
   updateEfectivoDisplay();
   renderDashboard();
+  renderMovimientos();
   document.getElementById('efectivo-input').value = '';
-  toast('✓ Efectivo reconciliado');
+  toast(`✓ Ajuste de ${diff >= 0 ? '+' : ''}${fmt(diff)} generado`);
 }
 function updateEfectivoDisplay() {
   document.getElementById('efectivo-display').textContent = fmt(efectivoBalance);
