@@ -1541,7 +1541,7 @@ const _MONTH_SHORT_ES = ['Ene','Feb','Mar','Abr','May','Jun',
 })();
 const INCOME_CATS = ['Nómina','Variable Lucía','Atocha','Pisos Cristina','Ayuda niños','Adelantos','Traspasos','Saldo mes anterior','Otros ingresos'];
 const CATS = ['Comida','Transporte','Niños','Gasolina','Gastos casa','Luz','Agua','Vida social','Hipoteca+Coche','Colegio','Seguros','Fijos','Maritza','Ahorro','Adelantos','Traspasos','Otros'];
-const CAT_EMOJI = {Comida:'🛒',Transporte:'🚌',Niños:'👶',Gasolina:'⛽','Gastos casa':'🏠',Luz:'💡',Agua:'💧','Vida social':'🎉',"Hipoteca+Coche":'🏦',Colegio:'🎓',Seguros:'🛡️',Comunidad:'🏘️',Fijos:'📋',Maritza:'👩','Teléfono':'📱',Ahorro:'🐷',Adelantos:'💸',Traspasos:'🔁',Otros:'📦',Ingreso:'💰','Ajuste efectivo':'⚖️'};
+const CAT_EMOJI = {Comida:'🛒',Transporte:'🚌',Niños:'👶',Gasolina:'⛽','Gastos casa':'🏠',Luz:'💡',Agua:'💧','Vida social':'🎉',"Hipoteca+Coche":'🏦',Colegio:'🎓',Seguros:'🛡️',Comunidad:'🏘️',Fijos:'📋',Maritza:'👩','Teléfono':'📱',Suscripciones:'📺',Ahorro:'🐷',Adelantos:'💸',Traspasos:'🔁',Otros:'📦',Ingreso:'💰','Ajuste efectivo':'⚖️'};
 const CAT_COLORS = {Comida:'#00d4aa',Transporte:'#0099ff',Niños:'#ff9f43',Gasolina:'#ff6b6b','Gastos casa':'#a29bfe',Luz:'#ffd32a',Agua:'#74b9ff','Vida social':'#fd79a8',"Hipoteca+Coche":'#e84393',Colegio:'#6c5ce7',Seguros:'#00cec9',Comunidad:'#fdcb6e',Fijos:'#636e72',Maritza:'#fd79a8','Teléfono':'#a29bfe',Ahorro:'#0f3d3b',Adelantos:'#f4b23b',Traspasos:'#74b9ff',Otros:'#b2bec3'};
 // Income lines for budget (editable per month)
 const DEFAULT_INCOME_LINES = [
@@ -3743,7 +3743,10 @@ function renderEditCatPicker() {
   if (editTipo === 'ingreso') {
     cats = INCOME_CATS.map(c => ({label:c, emoji:emojis[c]||'💰'}));
   } else {
-    cats = [...CATS, ...customCats.map(cc=>cc.label)].map(c => ({
+    // Incluir CATS builtin + fijos que puedan asignarse a movimientos + custom cats
+    const extraFijos = ['Teléfono','Comunidad','Suscripciones'];
+    const allGasto = [...CATS, ...extraFijos.filter(c=>!CATS.includes(c)), ...customCats.map(cc=>cc.label).filter(c=>!CATS.includes(c))];
+    cats = allGasto.map(c => ({
       label:c, emoji: customCats.find(cc=>cc.label===c)?.emoji || CAT_EMOJI[c] || '📦'
     }));
   }
