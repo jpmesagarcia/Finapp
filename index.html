@@ -2050,10 +2050,18 @@ function renderDashboard() {
       cristina: 'Pisos Cristina', ninos: 'Ayuda niños', saldo_ant: 'Saldo mes anterior'
     };
     const catName = ingCatMap[line.id] || line.label;
-    const byCategoria = ingMovs.filter(d=>
-      d.categoria===catName || d.categoria===line.label || d.categoria===line.id
-    ).reduce((s,d)=>s+d.importe,0);
-    ingShown += byCategoria;
+    let byCategoria, esAjuste = false;
+    if (line.id === 'saldo_ant') {
+      // El saldo inicial se materializa como movimientos de ajuste 📍 Saldo inicial
+      byCategoria = mData.filter(d=>d.tipo==='ajuste' && d.concepto && d.concepto.indexOf('Saldo inicial')!==-1).reduce((s,d)=>s+d.importe,0);
+      esAjuste = true;
+    } else {
+      byCategoria = ingMovs.filter(d=>
+        d.categoria===catName || d.categoria===line.label || d.categoria===line.id
+      ).reduce((s,d)=>s+d.importe,0);
+    }
+    // Solo sumamos a ingShown los que son ingresos reales (para el cálculo de Otros ingresos)
+    if (!esAjuste) ingShown += byCategoria;
     segRow(segIngresos,line.emoji||'💰',line.label,byCategoria,line.importe,'ingreso');
   });
   // Adelantos como línea propia si hay ingresos con esa categoría
