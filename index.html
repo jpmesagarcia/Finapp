@@ -2081,14 +2081,23 @@ function renderDashboard() {
   });
 
   // Variables
-  const varCatsD = CATS.filter(cat=>!FCATS.includes(cat)&&cat!=='Fijos');
+  const hiddenCatsD = (budgets[currentMonth] && budgets[currentMonth].hiddenCats) || [];
+  const varCatsBuiltin = CATS.filter(cat=>!FCATS.includes(cat)&&cat!=='Fijos');
+  const varCatsCustom  = customCats.filter(cc=>!CATS.includes(cc.label)&&!hiddenCatsD.includes(cc.label)).map(cc=>cc.label);
+  const varCatsD = [...varCatsBuiltin, ...varCatsCustom];
   const catBudD  = getBudget(currentMonth);
+  const budForCat = (cat) => {
+    if (catBudD[cat] !== undefined) return catBudD[cat];
+    const cc = customCats.find(c=>c.label===cat);
+    return cc ? (cc.importe||0) : 0;
+  };
   const totVarReal = mData.filter(d=>d.tipo==='gasto'&&varCatsD.includes(d.categoria)).reduce((s,d)=>s+Math.abs(d.importe),0);
-  const totVarBud  = varCatsD.reduce((s,cat)=>s+(catBudD[cat]||0),0);
+  const totVarBud  = varCatsD.reduce((s,cat)=>s+budForCat(cat),0);
   segHeader(segVariables,'📊','Variables',totVarReal,totVarBud);
   varCatsD.forEach(cat => {
     const real = mData.filter(d=>d.tipo==='gasto'&&d.categoria===cat).reduce((s,d)=>s+Math.abs(d.importe),0);
-    segRow(segVariables,CAT_EMOJI[cat]||'📦',cat,real,catBudD[cat]||0,'gasto');
+    const emoji = CAT_EMOJI[cat] || customCats.find(c=>c.label===cat)?.emoji || '📦';
+    segRow(segVariables,emoji,cat,real,budForCat(cat),'gasto');
   });
 }
 
